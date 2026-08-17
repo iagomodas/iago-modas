@@ -1,0 +1,4 @@
+# Copie estas chaves para os Secrets do GitHub Actions quando o projeto Supabase existir.
+# Nunca preencha ou publique chaves privadas, service_role, credenciais de pagamento ou dados bancários.
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=

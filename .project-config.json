@@ -1,0 +1,42 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "server",
+    "db",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://mAThBdDCBjUHdtG.root:W0kqM33NjP3i9J3ZngyW@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/DZKz7DkGdzJhEKk5mjdJ3g?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "https://7f0548f6b28a1758d9bf7be630d36cb4.artifacts.cloudflare.net/git/prod/DZKz7DkGdzJhEKk5mjdJ3g.git",
+    "expiration": "2026-08-16T02:28:46.560Z",
+    "token": "art_v2_x_05b29eac049f3f557a69fb4c51024c769588b5f4?expires=1786847326",
+    "backend": "GIT_BACKEND_ARTIFACTS"
+  },
+  "name": "overzied-modas",
+  "path": "/home/ubuntu/overzied-modas",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "S65t8zRT4z4etTJaLAi7Kz",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "7ThM4cAJeAMe92oja4Cjez",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "San Silva",
+    "OWNER_OPEN_ID": "ThoECvhCpXTyfTasjqtYyf",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "45dae2f3-36e0-4ef1-93cc-dddfcef43357",
+    "VITE_APP_ID": "DZKz7DkGdzJhEKk5mjdJ3g",
+    "VITE_APP_LOGO": "",
+    "VITE_APP_TITLE": "Overzied Modas",
+    "VITE_FRONTEND_FORGE_API_KEY": "ktXqErHcjWQq5HTRUo9E4v",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}
