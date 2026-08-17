@@ -1,0 +1,32 @@
+name: Verificação diária do Supabase
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-public-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conferir configuração pública
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
+
+      - name: Consultar catálogo público sem modificar dados
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl --fail --silent --show-error --retry 2 --connect-timeout 20 --max-time 60 \
+            -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
+            -H "Authorization: Bearer $VITE_SUPABASE_PUBLISHABLE_KEY" \
+            -H "Accept: application/json" \
+            "${VITE_SUPABASE_URL%/}/rest/v1/products?select=id&is_active=eq.true&limit=1"
