@@ -48,13 +48,21 @@ jobs:
       
         uses: actions/checkout@v4
         
+      - name: Preparar storefront estático
+      
+        run: |
+        
+          mkdir -p _site
+          
+          cp index.html _site/index.html
+          
       - name: Enviar storefront estático
       
         uses: actions/upload-pages-artifact@v3
         
         with:
         
-          path: index.html
+          path: _site
           
       - name: Publicar GitHub Pages
       
@@ -62,6 +70,10 @@ jobs:
         
         uses: actions/deploy-pages@v4
         
+
+
+
+
 
 
 
