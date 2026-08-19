@@ -66,8 +66,8 @@
 - [x] Renomear a conta GitHub `overziedmodas` para uma identidade disponível de IAGO MODAS e substituir esse nome nos endereços públicos da loja.
 - [x] Atualizar Supabase, Google OAuth, documentação e o remote local após a mudança da conta GitHub.
 - [x] Validar o retorno do login Google com token no fragmento e confirmar a abertura automática de `#/perfil` na IAGO MODAS.
-- [ ] Sincronizar o código-fonte e a documentação atualizados com a branch principal de `iagomodas/iago-modas`.
-- [ ] Preparar e validar o pacote de sincronização autorizado para a branch principal, incluindo código-fonte, documentação e evidências da publicação recuperada.
+- [ ] Confirmar por comparação integral a sincronização de todo o código-fonte e da documentação atualizados com a branch principal de `iagomodas/iago-modas`; os commits confirmados pela sessão web autorizada incluem painel, fotos privadas, testes, migrações e documentação em 19/08/2026.
+- [ ] Gerar e revisar uma lista final verificável do pacote de sincronização autorizado para a branch principal, incluindo arquivos, commits, documentação e evidências da publicação recuperada.
 - [x] Gerar e publicar uma cópia ZIP verificável da versão validada na branch isolada, enquanto a sincronização editável da branch principal estiver bloqueada por autorização.
 - [ ] Identificar e resolver a autorização técnica que continua causando erro 403 no envio Git à branch principal; a credencial inválida de `overziedmodas` foi removida, mas o token ativo de `iagomodas` ainda não tem escrita Git em `main`.
 - [x] Reexecutar o fluxo de sincronização da branch principal após remover a credencial antiga e registrar evidência objetiva de sucesso ou novo erro; o backup validado foi enviado com sucesso pela interface web no commit `4b956a6`.
@@ -78,6 +78,11 @@
 - [x] Disponibilizar o arquivo ZIP atualizado no repositório GitHub pela interface autorizada enquanto a sincronização automática permanecer bloqueada.
 - [x] Atualizar o README público da branch principal, que ainda exibe o nome antigo e referências desatualizadas da loja.
 - [x] Corrigir as referências documentais residuais ao perfil de atendimento para `@iagomodas9`.
+- [x] Sincronizar explicitamente na branch `main` os arquivos antes sem evidência objetiva de upload: `client/src/lib/profilePhoto.ts`, `client/src/components/StoreShell.tsx`, `client/src/pages/AdminPage.tsx`, `client/src/hooks/useSupabaseAdmin.ts`, migrações `202608190001/002/003` e `docs/SEGURANCA_DEFENSIVA_20260819.md`.
+- [ ] Comparar o estado local com a branch `main` por um método que funcione sem o `git fetch` bloqueado e registrar a lista exata de arquivos divergentes, ou confirmar divergência zero.
+- [ ] Revisar o documento final `docs/SINCRONIZACAO_MAIN_20260819.md` após todos os uploads para registrar uma relação completa de arquivos e commits sincronizados.
+- [ ] Sincronizar as seis divergências funcionais identificadas na auditoria da `main`: `storefront.ts`, `CustomerProfilePage.tsx`, `storefront.copy.test.ts`, `package.json`, `pnpm-lock.yaml` e `todo.md`.
+- [ ] Reexecutar a auditoria por arquivo compactado público e registrar divergência funcional zero antes de concluir a sincronização integral.
 
 ## Painel do dono
 
