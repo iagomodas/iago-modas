@@ -33,3 +33,11 @@ Após o envio de `storefront.ts`, `CustomerProfilePage.tsx`, `storefront.copy.te
 | Arquivos de backup, `vite.config.ts.bak`, `.manus`, `.project-config.json`, diretórios vazios e um documento histórico na raiz diferem | São artefatos de infraestrutura, backup ou histórico; não fazem parte do pacote funcional da loja. |
 
 > Restam somente o checklist e este registro de auditoria para a documentação pública da sincronização. Após seu envio, a comparação funcional deverá indicar **zero divergências**.
+
+## Comparação conclusiva
+
+Depois do envio do checklist no commit [`eeba008`](https://github.com/iagomodas/iago-modas/commit/eeba008e63b340f6d72ec8a42493ca5819c90fe2), a branch `main` foi baixada novamente e comparada integralmente com a cópia local.
+
+**Resultado: zero divergências funcionais.** Permaneceram somente artefatos excluídos da equivalência funcional: metadados locais do ambiente, diretórios de migração vazios, arquivos compactados históricos, um backup de configuração e um documento histórico mantido na raiz da branch.
+
+> A cópia editável da branch `main` agora preserva a versão validada da IAGO MODAS, incluindo código de vitrine, perfil do cliente, painel, fotos privadas, testes, dependências, migrações de segurança e preparação futura de pagamentos e frete.
