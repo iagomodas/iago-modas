@@ -48,6 +48,12 @@ export type StorefrontSettings = {
   instagram_enabled: boolean;
   whatsapp_number: string;
   whatsapp_enabled: boolean;
+  future_payment_provider: "manual" | "mercado_pago";
+  future_payments_enabled: boolean;
+  future_webhook_enabled: boolean;
+  future_shipping_provider: "manual" | "melhor_envio" | "correios";
+  future_shipping_quotes_enabled: boolean;
+  shipping_origin_postal_code: string;
   primary_color: string;
   background_color: string;
   hero_visible: boolean;
@@ -108,6 +114,12 @@ export const storefrontDefaults: StorefrontSettings = {
   instagram_enabled: true,
   whatsapp_number: "",
   whatsapp_enabled: false,
+  future_payment_provider: "manual",
+  future_payments_enabled: false,
+  future_webhook_enabled: false,
+  future_shipping_provider: "manual",
+  future_shipping_quotes_enabled: false,
+  shipping_origin_postal_code: "",
   primary_color: "#7affb9",
   background_color: "#0a0d10",
   hero_visible: true,
@@ -157,7 +169,7 @@ export function normalizeStorefrontSettings(value: Partial<StorefrontSettings> |
     newsletter_title: text(source.newsletter_title, storefrontDefaults.newsletter_title),
     newsletter_description: text(source.newsletter_description, storefrontDefaults.newsletter_description),
     footer_description: text(source.footer_description, storefrontDefaults.footer_description),
-    footer_location: text(source.footer_location, storefrontDefaults.footer_location),
+    footer_location: typeof source.footer_location === "string" ? source.footer_location.trim() : storefrontDefaults.footer_location,
     footer_hours: text(source.footer_hours, storefrontDefaults.footer_hours),
     local_city: text(source.local_city, storefrontDefaults.local_city),
     local_state: text(source.local_state, storefrontDefaults.local_state).toUpperCase().slice(0, 2),
@@ -172,6 +184,12 @@ export function normalizeStorefrontSettings(value: Partial<StorefrontSettings> |
     instagram_enabled: typeof source.instagram_enabled === "boolean" ? source.instagram_enabled : storefrontDefaults.instagram_enabled,
     whatsapp_number: typeof source.whatsapp_number === "string" ? source.whatsapp_number.replace(/\D/g, "") : storefrontDefaults.whatsapp_number,
     whatsapp_enabled: typeof source.whatsapp_enabled === "boolean" ? source.whatsapp_enabled : storefrontDefaults.whatsapp_enabled,
+    future_payment_provider: source.future_payment_provider === "mercado_pago" ? "mercado_pago" : "manual",
+    future_payments_enabled: source.future_payments_enabled === true,
+    future_webhook_enabled: source.future_webhook_enabled === true,
+    future_shipping_provider: source.future_shipping_provider === "melhor_envio" || source.future_shipping_provider === "correios" ? source.future_shipping_provider : "manual",
+    future_shipping_quotes_enabled: source.future_shipping_quotes_enabled === true,
+    shipping_origin_postal_code: typeof source.shipping_origin_postal_code === "string" ? source.shipping_origin_postal_code.replace(/\D/g, "").slice(0, 8) : "",
     primary_color: /^#[0-9A-Fa-f]{6}$/.test(String(source.primary_color ?? "")) ? String(source.primary_color) : storefrontDefaults.primary_color,
     background_color: /^#[0-9A-Fa-f]{6}$/.test(String(source.background_color ?? "")) ? String(source.background_color) : storefrontDefaults.background_color,
     hero_visible: typeof source.hero_visible === "boolean" ? source.hero_visible : storefrontDefaults.hero_visible,
