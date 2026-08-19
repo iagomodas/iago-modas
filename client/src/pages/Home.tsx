@@ -4,28 +4,39 @@ import { useCatalog } from "@/hooks/useCatalog";
 import { useStorefrontSettings } from "@/hooks/useStorefrontSettings";
 import { heroImage } from "@/lib/inlineHeroAsset";
 import { logoImage } from "@/lib/inlineLogoAsset";
-import { instagramDirectUrl } from "@/lib/instagramOrder";
+import { getInstagramDirectUrl, getWhatsAppChatUrl } from "@/lib/instagramOrder";
 import { storefrontPath } from "@/lib/storefront";
 import { ArrowRight, Box, Headphones, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Link } from "wouter";
 
 export default function Home() {
   const { setCartOpen } = useStore();
   const { products: catalogProducts } = useCatalog();
   const { settings } = useStorefrontSettings();
+  const configuredLogo = settings.logo_url?.trim();
+  const currentLogo = configuredLogo && !configuredLogo.startsWith("/manus-storage/") ? configuredLogo : logoImage;
   const highlights = catalogProducts.slice(0, 4);
   const benefits = [
-    { icon: MessageCircle, title: settings.benefit_one_title, caption: settings.benefit_one_caption },
+    { icon: FaInstagram, title: settings.benefit_one_title, caption: settings.benefit_one_caption },
     { icon: Box, title: settings.benefit_two_title, caption: settings.benefit_two_caption },
     { icon: Headphones, title: settings.benefit_three_title, caption: settings.benefit_three_caption },
     { icon: ShieldCheck, title: settings.benefit_four_title, caption: settings.benefit_four_caption },
   ];
   const fallbackHero = `${import.meta.env.BASE_URL}assets/overzied-hero.jpg`;
   const [heroSrc, setHeroSrc] = useState(settings.hero_image_url ?? fallbackHero);
-  const heroLines = useMemo(() => settings.hero_title.split("\n"), [settings.hero_title]);
+  const heroLines = useMemo(() => settings.hero_title.split(/\r?\n/).filter(Boolean), [settings.hero_title]);
   const themeStyle = { "--store-primary": settings.primary_color, "--store-background": settings.background_color } as CSSProperties;
+  const supportChannels = [
+    settings.instagram_enabled && settings.instagram_handle
+      ? { id: "instagram", label: "FALAR NO INSTAGRAM", ariaLabel: "Falar pelo Instagram", href: getInstagramDirectUrl(settings.instagram_handle), Icon: FaInstagram }
+      : null,
+    settings.whatsapp_enabled && settings.whatsapp_number
+      ? { id: "whatsapp", label: "FALAR NO WHATSAPP", ariaLabel: "Falar pelo WhatsApp", href: getWhatsAppChatUrl(settings.whatsapp_number), Icon: FaWhatsapp }
+      : null,
+  ].filter((channel): channel is NonNullable<typeof channel> => channel !== null);
+  const primarySupportChannel = supportChannels[0];
 
   useEffect(() => {
     setHeroSrc(settings.hero_image_url ?? fallbackHero);
@@ -48,27 +59,32 @@ export default function Home() {
               ))}
             </h1>
             <p className="mt-6 max-w-lg text-base leading-7 text-white/65">{settings.hero_description}</p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#7affb9]/25 bg-[#7affb9]/[.07] px-3 py-2 text-xs font-semibold text-[#93ffc8]">
+              <Box size={15} aria-hidden="true" /> ENVIAMOS PARA TODO O BRASIL
+            </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={storefrontPath(settings.hero_cta_path)} className="button-primary">
                 {settings.hero_cta_label} <ArrowRight size={17} />
               </Link>
-              <a className="button-secondary" target="_blank" rel="noreferrer" href={instagramDirectUrl}>
-                <FaInstagram aria-hidden="true" size={17} /> FALAR NO INSTAGRAM
-              </a>
+              {supportChannels.map(({ id, label, href, Icon }) => (
+                <a key={id} className="button-secondary" target="_blank" rel="noreferrer" href={href}>
+                  <Icon aria-hidden="true" size={17} /> {label}
+                </a>
+              ))}
             </div>
             <div className="mt-10 flex items-center gap-4">
-              <img src={logoImage} alt="OM" className="h-12 w-12 rounded-full object-cover opacity-85" />
+              <img src={currentLogo} alt="Logo IAGO MODAS" className="h-12 w-12 rounded-full object-cover opacity-85" />
               <p className="border-l border-white/15 pl-4 text-xs leading-5 text-white/45">
-                OVERZIED MODAS<br /><span className="text-white/70">MODA QUE REPRESENTA VOCÊ.</span>
+                IAGO MODAS<br /><span className="text-white/70">MODA QUE REPRESENTA VOCÊ.</span>
               </p>
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-[600px] lg:mr-0">
             <div className="absolute -inset-12 rounded-full bg-[var(--store-primary)]/10 blur-[90px]" />
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#12171b] p-2 shadow-[0_25px_80px_rgba(0,0,0,.45)]">
-              <img src={heroSrc} onError={() => setHeroSrc(heroImage)} alt="Modelo vestindo moda urbana Overzied Modas" className="aspect-[4/4.6] w-full rounded-[1.55rem] object-cover object-right" />
+              <img src={heroSrc} onError={() => setHeroSrc(heroImage)} alt="Modelo vestindo moda urbana IAGO MODAS" className="aspect-[4/4.6] w-full rounded-[1.55rem] object-cover object-right" />
               <div className="absolute bottom-8 left-8 rounded-xl border border-white/10 bg-black/60 px-4 py-3 backdrop-blur">
-                <p className="text-[9px] font-bold tracking-[.2em] text-[var(--store-primary)]">CURADORIA OM</p>
+                <p className="text-[9px] font-bold tracking-[.2em] text-[var(--store-primary)]">CURADORIA IM</p>
                 <p className="mt-1 text-sm font-semibold">Moda urbana premium</p>
               </div>
             </div>
@@ -109,7 +125,7 @@ export default function Home() {
       {settings.newsletter_visible && <section className="container py-16 md:py-24">
         <div className="grid items-center gap-8 rounded-[2rem] border border-white/10 bg-white/[.025] p-7 md:grid-cols-[1fr_auto] md:p-10"><div><p className="eyebrow">NOVIDADES</p><h2 className="section-title mt-2">{settings.newsletter_title}</h2><p className="mt-3 max-w-xl text-sm leading-6 text-white/55">{settings.newsletter_description}</p></div><form onSubmit={(event) => { event.preventDefault(); setCartOpen(true); }} className="flex w-full max-w-md gap-2"><input required type="email" placeholder="Seu melhor e-mail" className="h-12 min-w-0 flex-1 rounded-xl border border-white/15 bg-black/20 px-4 text-sm outline-none transition focus:border-[var(--store-primary)]" /><button className="button-primary shrink-0">QUERO RECEBER</button></form></div>
       </section>}
-      <a href={instagramDirectUrl} target="_blank" rel="noreferrer" aria-label="Falar pelo Instagram" className="instagram-float"><FaInstagram aria-hidden="true" size={21} /><span>ATENDIMENTO</span></a>
+      {primarySupportChannel && <a href={primarySupportChannel.href} target="_blank" rel="noreferrer" aria-label={primarySupportChannel.ariaLabel} className="instagram-float"><primarySupportChannel.Icon aria-hidden="true" size={21} /><span>ATENDIMENTO</span></a>}
     </main>
   );
 }
