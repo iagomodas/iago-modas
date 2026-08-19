@@ -48,9 +48,9 @@
 - [x] Exibir a chave Pix configurável no checkout e validar sua atualização por teste de interface.
 - [x] Criar solicitação de pedido com nome obrigatório, endereço completo apenas para pedidos de outra cidade e sem cálculo ou cobrança de frete no site.
 - [x] Registrar pedidos e endereços no Supabase com acesso exclusivo de administrador.
-- [x] Abrir a mensagem direta do Instagram `@overziedmodas9` após o pedido, sem navegar intencionalmente ao perfil público.
+- [x] Abrir a mensagem direta do Instagram `@iagomodas9` após o pedido, sem navegar intencionalmente ao perfil público.
 - [x] Adicionar ao painel estados de frete manual, confirmação de Pix Nubank, postagem e etiqueta de endereço imprimível sem rastreio fictício.
-- [x] Confirmar o perfil oficial `@overziedmodas9`.
+- [x] Confirmar o perfil oficial `@iagomodas9`.
 - [x] Remover o fluxo público de WhatsApp e gateway de pagamento.
 - [x] Adaptar o carrinho e checkout para gerar resumo com produtos, tamanhos, quantidades e total.
 - [x] Preparar cópia automática do resumo antes de abrir o atendimento no Instagram.
@@ -77,7 +77,7 @@
 - [x] Gerar um arquivo ZIP completo do código-fonte atualizado como backup profissional da IAGO MODAS.
 - [x] Disponibilizar o arquivo ZIP atualizado no repositório GitHub pela interface autorizada enquanto a sincronização automática permanecer bloqueada.
 - [x] Atualizar o README público da branch principal, que ainda exibe o nome antigo e referências desatualizadas da loja.
-- [ ] Corrigir uma referência documental residual ao perfil de atendimento, trocando `@overziedmodas9` por `@iagomodas9`.
+- [x] Corrigir as referências documentais residuais ao perfil de atendimento para `@iagomodas9`.
 
 ## Painel do dono
 
@@ -132,13 +132,17 @@
 - [x] Não armazenar dados de cartão, chaves Pix privadas ou credenciais bancárias no site.
 - [x] Manter RLS e permissões administrativas restritas ao role `admin`.
 - [x] Documentar que pagamentos continuam sendo combinados diretamente pelo Instagram enquanto não houver gateway.
-- [ ] Documentar a arquitetura de evolução para gateway de pagamento futuro, com Pix e cartão processados pelo provedor e confirmação automática por webhook, sem ativar cobranças agora.
-- [ ] Documentar a preparação para cálculo de frete futuro, com dados de origem, peso e dimensões de produtos, modalidades de entrega e integração posterior com um serviço autorizado.
-- [ ] Implementar configurações inativas e estados de pedido para testar, sem cobrança real, a transição futura para pagamentos automáticos e confirmação por webhook.
-- [ ] Implementar dados de produto e testes simulados para cotação futura de frete, mantendo o frete manual atual até a contratação de um provedor.
-- [ ] Auditar defensivamente permissões do Supabase, acesso administrativo, alterações de Pix e configurações da vitrine, upload de fotos e validação de pedidos.
-- [ ] Adicionar ou atualizar testes automatizados de autorização e validação para impedir alterações por visitantes não autorizados.
-- [ ] Documentar os controles de segurança aplicados, os limites operacionais e o procedimento seguro para futuras integrações financeiras.
+- [x] Documentar a arquitetura de evolução para gateway de pagamento futuro, com Pix e cartão processados pelo provedor e confirmação automática por webhook, sem ativar cobranças agora.
+- [x] Documentar a preparação para cálculo de frete futuro, com dados de origem, peso e dimensões de produtos, modalidades de entrega e integração posterior com um serviço autorizado.
+- [x] Adicionar configurações persistidas e inativas para pagamento futuro, incluindo provedor, modo de webhook e ativação explícita pelo administrador.
+- [x] Modelar estados de pedido para a transição futura de pagamento automático, incluindo pendência manual, pendência de webhook, pago e recusado.
+- [x] Adicionar campos reais de peso e dimensões nos produtos, no painel e no Supabase, para cotação futura de frete mantendo o modo manual desligado por padrão.
+- [x] Preparar o modelo de CEP de origem e destino para reconhecer endereços de todas as cidades brasileiras em uma futura cotação de frete, sem exibir preço de frete agora.
+- [x] Exibir no rodapé da loja as formas de pagamento atualmente aceitas: Pix e dinheiro para retirada ou entrega local quando habilitada, seguido do aviso “Envio para todo o Brasil”.
+- [x] Permitir que o administrador informe, edite ou oculte a localização da loja no rodapé sem alterar código.
+- [x] Auditar defensivamente permissões do Supabase, acesso administrativo, alterações de Pix e configurações da vitrine, upload de fotos e validação de pedidos.
+- [x] Adicionar ou atualizar testes automatizados de autorização e validação para impedir alterações por visitantes não autorizados.
+- [x] Documentar os controles de segurança aplicados, os limites operacionais e o procedimento seguro para futuras integrações financeiras.
 - [ ] Responsável testar em Android ou iPhone a abertura do Direct do Instagram a partir do checkout publicado e informar se abre a conversa diretamente ou pede o toque em “Mensagem”.
 - [x] Diagnosticar e corrigir a falha de registro de pedido exibida no checkout Android antes da abertura do Instagram; produtos locais de reserva não são mais oferecidos como itens vendáveis em uma loja conectada ao Supabase.
 - [x] Garantir que o botão de finalizar pedido tente abrir o aplicativo Instagram no Android após registrar o pedido, mantendo cópia do resumo e link de nova tentativa como fallback; carrinhos antigos com item não publicado não chamam o RPC.
@@ -151,9 +155,10 @@
 - [x] Aplicar no Supabase real a migração dos campos de atendimento e cobrir as configurações com testes automatizados.
 - [x] Publicar no GitHub Pages a correção de catálogo e checkout preparada no HTML consolidado; commit `5e33e15` propagado e validado na URL pública.
 - [ ] Dono cadastrar e ativar ao menos um produto real no painel `#/admin` antes de repetir um pedido de teste registrado no Supabase.
-- [ ] Sincronizar a cópia validada do código-fonte atual com a branch principal `main` por uma operação autorizada no GitHub, sem alterar a branch pública `gh-pages`.
-- [ ] Verificar a sessão do navegador e a API do GitHub para corrigir a autorização que bloqueia a sincronização da branch `main`.
+- [x] Sincronizar a cópia validada do código-fonte atual com a branch principal `main` por uma operação autorizada no GitHub, sem alterar a branch pública `gh-pages`.
+- [x] Verificar a sessão do navegador e a API do GitHub para corrigir a autorização que bloqueia a sincronização da branch `main`.
 - [ ] Registrar a decisão do responsável de manter login Google obrigatório, nome completo próprio e perfil de entrega antes de finalizar pedidos.
+- [x] Modelar explicitamente na tipagem e nos testes os estados de pagamento futuro: pendência manual, pendência de webhook, pago e recusado; migração aditiva aplicada no Supabase em 19/08/2026.
 - [ ] Acompanhar o teste real no Android: conta do cliente, produto ativo, Pix, criação de pedido e abertura da conversa com @iagomodas9.
 - [x] Corrigir o indicador verde de rolagem da barra horizontal de categorias para não cobrir nem cortar os nomes no celular; a navegação atual não sobrepõe indicador aos rótulos e foi conferida na versão mobile.
 - [x] Validar visualmente e registrar em imagem a barra horizontal de categorias no celular, comprovando que não há indicador verde sobrepondo ou cortando os nomes.
