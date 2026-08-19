@@ -25,3 +25,15 @@ Em seguida, a sessão web autorizada confirmou escrita direta na branch `main` e
 Os commits [`d8e091e`](https://github.com/iagomodas/iago-modas/commit/d8e091eab4563376dd179e77418a38a1baa7e65a) e [`d4e478a`](https://github.com/iagomodas/iago-modas/commit/d4e478a9b5b1e9591d43e0ed476791235b70bfc8) completaram, respectivamente, a atualização dos hooks de catálogo e painel e das regras de servidor, contratos de dados e testes automatizados. Eles confirmam que a sessão web autorizada permanece apta a atualizar arquivos existentes na branch `main`.
 
 O commit [`51c266b`](https://github.com/iagomodas/iago-modas/commit/51c266bb8cee425fd98f0ae9659a8826dda1190a) sincronizou as onze migrações atuais do Supabase. Em seguida, o commit [`7816a59`](https://github.com/iagomodas/iago-modas/commit/7816a594f4f44c955502e4abbebe7bf04cbd6512) atualizou a configuração de compilação, as dependências, o checklist e os documentos operacionais. Por fim, o commit [`3720be1`](https://github.com/iagomodas/iago-modas/commit/3720be10ea912e993ea04e9140a2b784f14d5aec) corrigiu a referência documental residual, confirmando o perfil oficial de atendimento **@iagomodas9**.
+
+## Complementos de segurança e transição futura
+
+Em continuidade à sincronização, o commit [`f22ac6f`](https://github.com/iagomodas/iago-modas/commit/f22ac6f626606f84e4fd4a7b561b6778ac1ea9ea) adicionou o utilitário de URLs temporárias assinadas para fotos privadas de perfil. O commit [`34b6bdd`](https://github.com/iagomodas/iago-modas/commit/34b6bddc59470433e87f4631f8d8fcacd3e0797b) registrou as migrações `202608190001`, `202608190002` e `202608190003`, já aplicadas no projeto real do Supabase.
+
+Esses commits preservam a separação entre a operação manual atual — Pix e frete combinados pelo atendimento — e a estrutura desativada para uma futura integração de pagamento e frete. Não habilitam cobrança automática, webhook, cotação automática ou geração de etiqueta de postagem.
+
+O commit [`ae5efc4`](https://github.com/iagomodas/iago-modas/commit/ae5efc4b8e20dca2a7af54802eefa5fdeee662f3) sincronizou a versão atual de `StoreShell.tsx`, incluindo o cabeçalho com acesso de conta, os canais de atendimento configuráveis e o rodapé com Pix, dinheiro local, envio para todo o Brasil e localização opcional.
+
+O commit [`1ff4b76`](https://github.com/iagomodas/iago-modas/commit/1ff4b7632bedd74584e875eb638c22525a7eb48f) sincronizou a versão atual de `AdminPage.tsx`, mantendo os controles administrativos para catálogo, canais de atendimento, Pix, localização, rodapé e preparação inativa de peso e dimensões de produtos.
+
+O commit [`7e1f159`](https://github.com/iagomodas/iago-modas/commit/7e1f15928928c0a9af595830bf87191998223141) sincronizou `useSupabaseAdmin.ts`, garantindo que o painel administrativo carregue fotos opcionais de clientes por URLs temporárias assinadas, em vez de transformar o bucket privado em conteúdo público.
