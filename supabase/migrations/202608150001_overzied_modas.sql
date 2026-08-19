@@ -53,6 +53,7 @@ create table public.storefront_settings (
   hero_cta_label text not null,
   hero_cta_path text not null,
   hero_image_url text,
+  logo_url text,
   promotion_eyebrow text not null,
   promotion_title text not null,
   promotion_accent text not null,
@@ -84,7 +85,7 @@ create table public.storefront_settings (
 );
 
 insert into public.storefront_settings (
-  id, announcement_text, hero_eyebrow, hero_title, hero_accent, hero_description, hero_cta_label, hero_cta_path,
+  id, announcement_text, hero_eyebrow, hero_title, hero_accent, hero_description, hero_cta_label, hero_cta_path, logo_url,
   promotion_eyebrow, promotion_title, promotion_accent, promotion_description, promotion_cta_label, promotion_cta_path,
   highlights_eyebrow, highlights_title, highlights_description, highlights_cta_label, highlights_cta_path,
   categories_eyebrow, categories_title, categories_description,
@@ -99,7 +100,7 @@ insert into public.storefront_settings (
   'VER KITS PROMOCIONAIS', '/categoria/kits',
   'PROMOÇÃO DA SEMANA', 'KIT ESSENTIAL', 'POR R$ 149,90',
   'Duas camisetas de algodão premium para você renovar o visual pagando menos.',
-  'APROVEITAR AGORA', '/produto/kit-urban-essential',
+  'APROVEITAR AGORA', '/produto/kit-urban-essential', null,
   'COLEÇÃO', 'DESTAQUES DA SEMANA',
   'Peças versáteis e selecionadas para expressar a sua identidade. Encontre seu tamanho e leve a Overzied Modas com você.',
   'VER TODOS', '/categoria/camisetas',
