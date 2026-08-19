@@ -10,6 +10,26 @@ const deliveryProfileMigration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/202608180001_customer_delivery_profile.sql"),
   "utf8",
 );
+const profilePhotoHardeningMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608190001_security_hardening_private_profile_photos.sql"),
+  "utf8",
+);
+const checkoutHardeningMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608190002_security_hardening_checkout_authorization.sql"),
+  "utf8",
+);
+const futureCommerceMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608190003_future_commerce_readiness.sql"),
+  "utf8",
+);
+const futurePaymentTransitionMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608190004_future_payment_transition_states.sql"),
+  "utf8",
+);
+const profilePhotoHelper = readFileSync(
+  resolve(process.cwd(), "client/src/lib/profilePhoto.ts"),
+  "utf8",
+);
 
 describe("migração Supabase da Overzied Modas", () => {
   it("habilita RLS em todos os dados públicos da loja", () => {
@@ -45,5 +65,37 @@ describe("migração Supabase da Overzied Modas", () => {
     expect(deliveryProfileMigration).toContain("where id = auth.uid()");
     expect(deliveryProfileMigration).toContain("grant execute on function public.update_own_customer_profile");
     expect(deliveryProfileMigration).not.toMatch(/create policy[\s\S]*profiles[\s\S]*for update/i);
+  });
+
+  it("mantém fotos de perfil privadas e acessíveis somente ao dono ou administrador", () => {
+    expect(profilePhotoHardeningMigration).toContain("set public = false");
+    expect(profilePhotoHardeningMigration).toContain('create policy "customer profile photos: read own or admin"');
+    expect(profilePhotoHardeningMigration).toContain("(select public.is_admin())");
+    expect(profilePhotoHardeningMigration).toContain("revoke all on function public.update_own_profile_photo(text) from public");
+    expect(profilePhotoHelper).toContain("createSignedUrl(profilePhotoPath, SIGNED_URL_TTL_SECONDS)");
+    expect(profilePhotoHelper).not.toContain("getPublicUrl");
+  });
+
+  it("bloqueia pedidos anônimos, e-mails adulterados e formas de pagamento ainda não habilitadas", () => {
+    expect(checkoutHardeningMigration).toContain("if auth.uid() is null then");
+    expect(checkoutHardeningMigration).toContain("lower(trim(p_customer_email)) <> signed_in_email");
+    expect(checkoutHardeningMigration).toContain("p_payment_method::text not in ('pix', 'cash')");
+    expect(checkoutHardeningMigration).toContain("revoke all on function public.create_checkout_order");
+    expect(checkoutHardeningMigration).toContain("to authenticated");
+    expect(checkoutHardeningMigration).not.toMatch(/grant execute[\s\S]*create_checkout_order[\s\S]*to anon/i);
+  });
+
+  it("mantém a preparação de pagamento e frete futuros desativada por padrão", () => {
+    expect(futureCommerceMigration).toContain("future_payments_enabled boolean not null default false");
+    expect(futureCommerceMigration).toContain("future_shipping_quotes_enabled boolean not null default false");
+    expect(futureCommerceMigration).toContain("shipping_origin_postal_code = '' or shipping_origin_postal_code ~ '^[0-9]{8}$'");
+    ["shipping_weight_grams", "shipping_length_cm", "shipping_width_cm", "shipping_height_cm"].forEach((column) => expect(futureCommerceMigration).toContain(column));
+    expect(futureCommerceMigration).toContain("payment_webhook_status text not null default 'not_configured'");
+  });
+
+  it("define estados explícitos para a futura confirmação de pagamento", () => {
+    expect(futurePaymentTransitionMigration).toContain("payment_transition_state text not null default 'manual_pending'");
+    ["manual_pending", "webhook_pending", "paid", "rejected"].forEach((state) => expect(futurePaymentTransitionMigration).toContain(`'${state}'`));
+    expect(futurePaymentTransitionMigration).toContain("nenhuma cobrança ou webhook é ativado aqui");
   });
 });
