@@ -36,18 +36,23 @@ export function useSupabaseOrders() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!supabase) {
+    const client = supabase;
+    if (!client) {
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data, error: requestError } = await supabase
+    const { data, error: requestError } = await client
       .from("orders")
-      .select("id, order_number, customer_name, payment_status, total_cents, created_at")
+      .select("id, order_number, customer_user_id, customer_name, payment_status, total_cents, created_at, delivery_mode, delivery_city, delivery_state, delivery_neighborhood, delivery_number, delivery_complement, customer_phone, postal_code, address, order_status, tracking_code")
       .order("created_at", { ascending: false });
     if (requestError) setError(requestError.message);
     else {
-      setOrders((data ?? []) as SupabaseOrder[]);
+      const orders = (data ?? []) as SupabaseOrder[];
+      const customerIds = Array.from(new Set(orders.map((order) => order.customer_user_id).filter((id): id is string => Boolean(id))));
+      const { data: profiles } = customerIds.length ? await client.from("profiles").select("id, profile_photo_path").in("id", customerIds) : { data: [] as { id: string; profile_photo_path: string | null }[] };
+      const photosByCustomer = new Map((profiles ?? []).map((profile) => [profile.id, profile.profile_photo_path ? client.storage.from("customer-profile-photos").getPublicUrl(profile.profile_photo_path).data.publicUrl : null]));
+      setOrders(orders.map((order) => ({ ...order, customer_photo_url: order.customer_user_id ? photosByCustomer.get(order.customer_user_id) ?? null : null })));
       setError(null);
     }
     setLoading(false);

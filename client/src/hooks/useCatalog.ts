@@ -32,13 +32,15 @@ export function useCatalog() {
     if (hasSupabaseConfiguration) void refreshSupabase();
   }, [refreshSupabase]);
 
-  const activeProducts = hasSupabaseConfiguration ? supabaseProducts : [];
+  const isConnectedToSupabase = hasSupabaseConfiguration;
 
   return {
-    products: activeProducts.length > 0 ? activeProducts : fallbackProducts,
-    isUsingFallback: activeProducts.length === 0,
-    isLoading: hasSupabaseConfiguration ? supabaseLoading : false,
-    error: hasSupabaseConfiguration ? supabaseError : null,
+    // Produtos locais servem somente como prévia sem Supabase. Em uma loja conectada,
+    // uma resposta vazia significa que o dono ainda precisa publicar produtos no painel.
+    products: isConnectedToSupabase ? supabaseProducts : fallbackProducts,
+    isUsingFallback: !isConnectedToSupabase,
+    isLoading: isConnectedToSupabase ? supabaseLoading : false,
+    error: isConnectedToSupabase ? supabaseError : null,
     refetch: refreshSupabase,
   };
 }
