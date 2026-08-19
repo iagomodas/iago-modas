@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Camera, CheckCircle2, ImagePlus, LogIn, MapPin, Phone, Save, Trash2, UserRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOAuthReturnUrl } from "@/lib/oauthReturn";
+import { createPrivateProfilePhotoUrl } from "@/lib/profilePhoto";
 
 type DeliveryDraft = {
   phone: string;
@@ -31,15 +32,16 @@ export default function CustomerProfilePage() {
 
   useEffect(() => {
     void (async () => {
-      if (!supabase) { setLoading(false); return; }
-      const { data } = await supabase.auth.getUser();
+      const client = supabase;
+      if (!client) { setLoading(false); return; }
+      const { data } = await client.auth.getUser();
       if (!data.user) { setLoading(false); return; }
       setSignedIn(true);
       setUserId(data.user.id);
-      const { data: profile } = await supabase.from("profiles").select("display_name, profile_photo_path, delivery_phone, delivery_postal_code, delivery_street, delivery_number, delivery_complement, delivery_district, delivery_city, delivery_state").eq("id", data.user.id).maybeSingle();
+      const { data: profile } = await client.from("profiles").select("display_name, profile_photo_path, delivery_phone, delivery_postal_code, delivery_street, delivery_number, delivery_complement, delivery_district, delivery_city, delivery_state").eq("id", data.user.id).maybeSingle();
       setName(profile?.display_name ?? "");
       setPhotoPath(profile?.profile_photo_path ?? null);
-      if (profile?.profile_photo_path) setPhotoUrl(supabase.storage.from("customer-profile-photos").getPublicUrl(profile.profile_photo_path).data.publicUrl);
+      setPhotoUrl(await createPrivateProfilePhotoUrl(client, profile?.profile_photo_path));
       setDelivery({
         phone: profile?.delivery_phone ?? "",
         cep: profile?.delivery_postal_code ?? "",
@@ -99,7 +101,7 @@ export default function CustomerProfilePage() {
       if (profileError) { setNotice("A imagem foi enviada, mas não foi possível salvar no perfil agora."); return; }
       if (photoPath && photoPath !== nextPath) await supabase.storage.from("customer-profile-photos").remove([photoPath]);
       setPhotoPath(nextPath);
-      setPhotoUrl(`${supabase.storage.from("customer-profile-photos").getPublicUrl(nextPath).data.publicUrl}?v=${Date.now()}`);
+      setPhotoUrl(await createPrivateProfilePhotoUrl(supabase, nextPath));
       setNotice("Foto de perfil atualizada.");
     } finally { setPhotoBusy(false); }
   }
