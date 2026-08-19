@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const publicFiles = [
   "client/index.html",
+  "client/src/lib/inlineAssets.ts",
   "client/src/lib/inlineLogoAsset.ts",
   "client/src/lib/storefront.ts",
   "client/src/pages/Home.tsx",
