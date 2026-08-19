@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este roteiro ativa os recursos que dependem do Supabase sem alterar o modelo comercial definido para a **IAGO MODAS**: o cliente escolhe as peças no site e envia o pedido para o Instagram **@overziedmodas9**; o dono administra produtos, preços, estoque, pedidos e textos da vitrine pelo painel privado.
+Este roteiro ativa os recursos que dependem do Supabase sem alterar o modelo comercial definido para a **IAGO MODAS**: o cliente escolhe as peças no site e envia o pedido para o Instagram **@iagomodas9**; o dono administra produtos, preços, estoque, pedidos e textos da vitrine pelo painel privado.
 
 > O Supabase guarda e protege os dados da loja. Ele não processa pagamentos, não recebe o dinheiro das vendas e não substitui a conversa do pedido no Instagram.
 

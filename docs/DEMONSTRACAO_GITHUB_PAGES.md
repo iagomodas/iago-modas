@@ -8,7 +8,7 @@ Este roteiro apresenta a loja publicada para o dono conferir o catálogo, a nave
 2. Confira a página inicial, as categorias, a busca e o carrinho.
 3. Abra um produto para testar a galeria de fotos, tamanhos e descrição.
 4. No checkout, entre com Google e informe o nome completo do cliente quando solicitado.
-5. Finalize o pedido de teste. O site registra a solicitação e prepara a conversa no Instagram **@overziedmodas9**; no celular, tenta abrir o aplicativo e usa a web apenas como alternativa.
+5. Finalize o pedido de teste. O site registra a solicitação e prepara a conversa no Instagram **@iagomodas9**; no celular, tenta abrir o aplicativo e usa a web apenas como alternativa.
 
 ## O que conferir
 
