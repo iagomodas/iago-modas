@@ -17,11 +17,16 @@ describe("mensagens públicas confirmadas da vitrine", () => {
     });
   });
 
-  it("não renderiza horário vazio no rodapé e prioriza detalhes no mobile", () => {
+  it("exibe somente os pagamentos atuais, o envio nacional e respeita localização opcional", () => {
     expect(shellSource).toContain("settings.footer_hours.trim() &&");
+    expect(shellSource).toContain("Pix");
+    expect(shellSource).toContain("Dinheiro local");
+    expect(shellSource).toContain("Envio para todo o Brasil");
+    expect(shellSource).toContain("settings.footer_location &&");
+    expect(shellSource).not.toContain("Visa");
+    expect(shellSource).not.toContain("Mastercard");
     expect(productSource).toContain('className="order-1 grid grid-cols-1');
     expect(productSource).toContain('<section className="order-2 lg:order-2 lg:pt-3"');
     expect(productSource).not.toContain("Envio para todo o Brasil");
   });
 });
-
