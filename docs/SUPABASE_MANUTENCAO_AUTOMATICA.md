@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Manter o projeto Supabase da Overzied Modas acessível sem exigir que o dono entre manualmente no painel toda semana.
+Manter o projeto Supabase da IAGO MODAS acessível sem exigir que o dono entre manualmente no painel toda semana.
 
 ## Política consultada
 

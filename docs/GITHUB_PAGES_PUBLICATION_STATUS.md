@@ -2,7 +2,7 @@
 
 ## Repositório de destino
 
-O repositório definido para a loja é `overziedmodas/overzied-modas`. O pacote final deve ser enviado mantendo a estrutura completa do projeto, especialmente as pastas `.github`, `supabase`, `docs`, `client`, `server` e `shared`.
+O repositório definido para a loja é `iagomodas/iago-modas`. O pacote final deve ser enviado mantendo a estrutura completa do projeto, especialmente as pastas `.github`, `supabase`, `docs`, `client`, `server` e `shared`.
 
 ## Workflow de publicação
 
@@ -19,13 +19,13 @@ A ação instala explicitamente o pnpm 10.4.1, gera o conteúdo em `dist/public`
 Após o workflow concluir com sucesso e o GitHub Pages estar configurado para publicar pelo GitHub Actions, o endereço esperado será:
 
 ```text
-https://overziedmodas.github.io/overzied-modas/
+https://iagomodas.github.io/iago-modas/
 ```
 
 O painel administrativo ficará em:
 
 ```text
-https://overziedmodas.github.io/overzied-modas/#/admin
+https://iagomodas.github.io/iago-modas/#/admin
 ```
 
 ## Configurações externas obrigatórias

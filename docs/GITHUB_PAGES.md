@@ -1,10 +1,10 @@
-# Publicação estática: GitHub Pages + Supabase
+# Publicação estática da IAGO MODAS: GitHub Pages + Supabase
 
-Esta versão da Overzied Modas foi preparada para publicar o **frontend estático** no GitHub Pages e usar o Supabase para catálogo, pedidos e autenticação.
+Esta versão da **IAGO MODAS** publica o frontend estático no GitHub Pages e usa o Supabase para catálogo, pedidos, perfis e autenticação.
 
 ## Configuração inicial
 
-1. Crie um repositório no GitHub e envie o conteúdo do projeto para sua branch padrão, normalmente `main`. Se o repositório tiver sido criado com a branch `root`, use `root`.
+1. Use o repositório `overziedmodas/oversized-modas` na branch `main`.
 2. No repositório, abra **Settings → Pages** e escolha **GitHub Actions** como fonte de publicação.
 3. Em **Settings → Secrets and variables → Actions**, crie os dois segredos abaixo:
 
@@ -15,20 +15,20 @@ Esta versão da Overzied Modas foi preparada para publicar o **frontend estátic
 
 > Nunca adicione a chave `service_role`, senha do banco, token de gateway ou chave Pix aos segredos do frontend, ao código ou ao repositório.
 
-4. Abra `supabase/migrations/202608150001_overzied_modas.sql`, revise e execute o conteúdo no **SQL Editor** do Supabase.
+4. Para uma instalação nova, aplique as migrações de `supabase/migrations/` em ordem. No projeto IAGO MODAS já conectado, as migrações aplicadas não devem ser executadas novamente.
 5. Aguarde a execução do workflow **Publicar storefront estático no GitHub Pages**. A URL aparecerá no resumo do workflow e em **Settings → Pages**.
 
 ## Como funcionam os links
 
 O projeto usa rotas com `#` para que os links de produtos, categorias, busca, checkout e administração funcionem no GitHub Pages sem exigir servidor próprio.
 
-## Login Google futuro
+## Login Google
 
-Quando for aprovado pelo responsável da loja, ative o provedor Google em **Supabase Auth** e registre a URL publicada do GitHub Pages na lista de redirecionamentos permitidos. Não crie nem cole as chaves OAuth diretamente no código do site.
+Ative o provedor Google em **Supabase Auth** e registre a URL publicada do GitHub Pages na lista de redirecionamentos permitidos. Não crie nem cole as chaves OAuth diretamente no código do site. Depois, promova somente o e-mail do dono ao papel `admin` conforme o roteiro de ativação.
 
 ## Atualizações
 
-Cada `git push` para `main` ou `root` constrói e publica uma nova versão. Antes de publicar mudanças de banco, preserve uma cópia da migração SQL e revise as políticas RLS.
+Cada `git push` para `main` constrói e publica uma nova versão. Antes de publicar mudanças de banco, preserve uma cópia da migração SQL e revise as políticas RLS.
 
 ## Verificação semanal autorizada
 

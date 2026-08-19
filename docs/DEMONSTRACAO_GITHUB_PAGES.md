@@ -1,39 +1,27 @@
-# Demonstração da Overzied Modas no celular
+# Demonstração da IAGO MODAS no celular
 
-Este roteiro permite publicar a vitrine atual para apresentar a loja ao responsável antes de decidir entre o modelo completo com Supabase ou o fechamento de pedidos exclusivamente pelo WhatsApp.
+Este roteiro apresenta a loja publicada para o dono conferir o catálogo, a navegação e o fluxo de pedido pelo Instagram.
 
-## Publicação no GitHub Pages
+## Abrir a loja publicada
 
-1. Extraia o arquivo ZIP do projeto em um computador.
-2. Crie no GitHub um repositório novo, por exemplo `overzied-modas`, e identifique a ramificação principal. Geralmente ela se chama `main`, mas alguns repositórios usam `root`.
-3. Envie todos os arquivos extraídos para o repositório, inclusive a pasta `.github`, pois ela contém a automação de publicação.
-4. No repositório, abra **Settings → Pages** e selecione **GitHub Actions** como origem da publicação.
-5. Abra a aba **Actions**. O workflow **Publicar storefront estático no GitHub Pages** será executado automaticamente depois do envio para `main` ou `root`.
-6. Ao terminar, o GitHub mostrará um endereço neste formato:
+1. Acesse `https://iagomodas.github.io/iago-modas/` no navegador do celular.
+2. Confira a página inicial, as categorias, a busca e o carrinho.
+3. Abra um produto para testar a galeria de fotos, tamanhos e descrição.
+4. No checkout, entre com Google e informe o nome completo do cliente quando solicitado.
+5. Finalize o pedido de teste. O site registra a solicitação e prepara a conversa no Instagram **@overziedmodas9**; no celular, tenta abrir o aplicativo e usa a web apenas como alternativa.
 
-```text
-https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/
-```
+## O que conferir
 
-7. Copie esse endereço e abra-o no navegador do celular. Esse é o link ideal para mostrar a vitrine ao responsável.
+| Tela | O que verificar |
+| --- | --- |
+| Página inicial | Logo IM, marca IAGO MODAS, hero, categorias e carrinho |
+| Categoria | Produtos organizados por tipo, marca e coleção |
+| Produto | Fotos, preço, tamanhos, estoque e inclusão no carrinho |
+| Checkout | Nome completo, retirada local ou endereço para postagem e resumo do pedido |
+| Painel administrativo | Cadastro de produtos, marca, coleção, preço, fotos, pedidos, Pix e vitrine |
 
-## O que mostrar na apresentação
+## Publicação de novas versões
 
-| Tela | O que explicar |
-|---|---|
-| Página inicial | Marca, destaque visual, categorias e botão de atendimento. |
-| Categoria | Produtos organizados por camisetas, bermudas, kits, calças, calçados, esportivo, perfumes e acessórios. |
-| Página de produto | Fotos, preço, tamanhos, carrinho e botão do WhatsApp. |
-| Carrinho e checkout | Experiência de compra preparada para a decisão do responsável. |
-| Painel administrativo | Será liberado apenas para a conta Google autorizada se o responsável escolher o modelo com Supabase. |
+O repositório publicado é `iagomodas/iago-modas`. Um envio à branch `main` dispara a publicação automática por GitHub Actions. O workflow já usa a base correta do repositório para evitar tela branca no GitHub Pages.
 
-## Limitações da demonstração antes do Supabase
-
-Enquanto o Supabase não estiver conectado, o catálogo exibido é de demonstração e as alterações administrativas não ficam gravadas para todos os visitantes. O checkout também não registra pedidos reais nem processa pagamentos. Antes de divulgar a loja a clientes, será necessário informar o número oficial do WhatsApp e escolher um dos dois modelos abaixo.
-
-| Escolha do responsável | Próxima configuração |
-|---|---|
-| Fechamento pelo WhatsApp | Configurar o número oficial e fazer o carrinho montar a mensagem do pedido para o atendimento. |
-| Loja completa | Conectar Supabase, ativar a conta Google do dono, salvar produtos e pedidos e escolher o gateway de pagamento. |
-
-> A demonstração visual pode ser publicada mesmo sem Supabase. As variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` só serão necessárias quando o banco real for criado.
+> A confirmação final de abertura direta do aplicativo Instagram deve ser feita em um aparelho Android e em um iPhone reais, pois cada aparelho e versão do Instagram pode aplicar um comportamento próprio para links externos.
