@@ -1,0 +1,25 @@
+import { buildSalesAnalytics } from "@/lib/salesAnalytics";
+import { toMoney } from "@/lib/catalog";
+import type { SupabaseOrder } from "@/lib/supabaseTypes";
+import { CustomerOrderAvatar } from "@/components/CustomerOrderAvatar";
+import { ChartNoAxesCombined, CircleDollarSign, Clock3, ShoppingBag, TrendingUp } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+type Props = { orders: SupabaseOrder[]; loading: boolean };
+
+export function AdminSalesOverview({ orders, loading }: Props) {
+  const analytics = buildSalesAnalytics(orders);
+  const metrics = [
+    { label: "VENDIDO HOJE", value: toMoney(analytics.confirmedTodayCents / 100), icon: CircleDollarSign },
+    { label: "VENDIDO NA SEMANA", value: toMoney(analytics.confirmedWeekCents / 100), icon: TrendingUp },
+    { label: "VENDIDO NO MÊS", value: toMoney(analytics.confirmedMonthCents / 100), icon: ChartNoAxesCombined },
+    { label: "PAGAMENTOS PENDENTES", value: String(analytics.pendingCount), icon: Clock3 },
+  ];
+
+  return <section id="sales" className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[.035] p-6 md:p-7">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold tracking-[.18em] text-[#82ffc5]">VENDAS REAIS</p><h2 className="mt-1 font-display text-2xl">Acompanhamento de vendas</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">Os valores consideram apenas pedidos registrados e confirmados. Pedidos pendentes continuam separados até o Pix ser confirmado.</p></div><div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/55"><ShoppingBag size={14} className="text-[#82ffc5]" /> {analytics.confirmedCount} venda{analytics.confirmedCount === 1 ? "" : "s"} confirmada{analytics.confirmedCount === 1 ? "" : "s"}</div></div>
+    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(({ label, value, icon: Icon }) => <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center justify-between"><p className="text-[10px] font-bold tracking-[.15em] text-white/45">{label}</p><Icon size={16} className="text-[#82ffc5]" /></div><p className="mt-3 text-2xl font-semibold text-white">{loading ? "—" : value}</p></div>)}</div>
+    <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4 md:p-5"><div className="flex flex-wrap items-baseline justify-between gap-2"><div><h3 className="font-medium text-white">Tendência das vendas</h3><p className="mt-1 text-xs text-white/45">Últimos 7 dias, considerando vendas confirmadas.</p></div><p className="text-xs text-white/45">Pedidos recebidos hoje: <span className="font-semibold text-white">{loading ? "—" : analytics.receivedToday}</span></p></div><div className="mt-5 h-56 w-full" aria-label="Gráfico de vendas confirmadas dos últimos sete dias"><ResponsiveContainer width="100%" height="100%"><AreaChart data={analytics.trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}><defs><linearGradient id="iago-sales-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#82ffc5" stopOpacity={0.38} /><stop offset="100%" stopColor="#82ffc5" stopOpacity={0.01} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#ffffff" strokeOpacity={0.08} /><XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#a1a1aa", fontSize: 11 }} /><YAxis tickLine={false} axisLine={false} tick={{ fill: "#a1a1aa", fontSize: 11 }} tickFormatter={(value) => `R$${Math.round(value / 100)}`} width={50} /><Tooltip cursor={{ stroke: "#82ffc5", strokeOpacity: 0.35 }} contentStyle={{ background: "#111315", border: "1px solid rgba(255,255,255,.12)", borderRadius: "12px" }} labelStyle={{ color: "#fff" }} formatter={(value) => toMoney(Number(Array.isArray(value) ? value[0] : value) / 100)} /><Area name="Vendas confirmadas" type="monotone" dataKey="totalCents" stroke="#82ffc5" strokeWidth={2.5} fill="url(#iago-sales-gradient)" /></AreaChart></ResponsiveContainer></div></div>
+    <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center justify-between gap-3"><div><h3 className="font-medium text-white">Clientes nos pedidos recentes</h3><p className="mt-1 text-xs text-white/45">A foto aparece apenas quando o cliente escolheu enviar uma imagem para o próprio perfil.</p></div></div><div className="mt-4 grid gap-2 md:grid-cols-2">{orders.slice(0, 6).map((order) => <div key={order.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.035] p-3"><CustomerOrderAvatar name={order.customer_name} photoUrl={order.customer_photo_url} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-white">{order.customer_name}</p><p className="mt-1 text-xs text-white/45">{order.order_number} · {toMoney(order.total_cents / 100)}</p></div></div>)}{!loading && orders.length === 0 && <p className="text-sm text-white/50">Os clientes aparecerão aqui depois do primeiro pedido.</p>}</div></div>
+  </section>;
+}
