@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/202608150001_overzied_modas.sql"),
   "utf8",
 );
+const deliveryProfileMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608180001_customer_delivery_profile.sql"),
+  "utf8",
+);
 
 describe("migração Supabase da Overzied Modas", () => {
   it("habilita RLS em todos os dados públicos da loja", () => {
@@ -33,5 +37,13 @@ describe("migração Supabase da Overzied Modas", () => {
       "benefit_one_title text not null",
       "benefit_four_caption text not null",
     ].forEach((column) => expect(migration).toContain(column));
+  });
+
+  it("permite salvar apenas os dados de entrega do próprio cliente por função restrita", () => {
+    ["delivery_phone", "delivery_postal_code", "delivery_street", "delivery_number", "delivery_district", "delivery_city", "delivery_state"].forEach((column) => expect(deliveryProfileMigration).toContain(`add column if not exists ${column} text`));
+    expect(deliveryProfileMigration).toContain("create or replace function public.update_own_customer_profile");
+    expect(deliveryProfileMigration).toContain("where id = auth.uid()");
+    expect(deliveryProfileMigration).toContain("grant execute on function public.update_own_customer_profile");
+    expect(deliveryProfileMigration).not.toMatch(/create policy[\s\S]*profiles[\s\S]*for update/i);
   });
 });

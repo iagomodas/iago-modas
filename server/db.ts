@@ -180,7 +180,7 @@ export async function createPendingOrder(input: PendingOrderInput) {
   }
   const totalCents = items.reduce((total, item) => total + item.unitPriceCents * item.quantity, 0);
 
-  const orderNumber = `OM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const orderNumber = `IM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const result = await db.insert(orders).values({
     orderNumber,
     customerName: input.customerName,

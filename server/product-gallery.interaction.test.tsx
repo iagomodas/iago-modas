@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addToCart, galleryProduct } = vi.hoisted(() => ({
+const { addToCart, galleryProduct, productList } = vi.hoisted(() => ({
   addToCart: vi.fn(),
   galleryProduct: {
   id: 9,
@@ -23,10 +23,13 @@ const { addToCart, galleryProduct } = vi.hoisted(() => ({
     "https://cdn.example.com/costas.jpg",
   ],
   },
+  productList: [] as Array<Record<string, unknown>>,
 }));
 
+productList.push(galleryProduct);
+
 vi.mock("@/contexts/StoreContext", () => ({ useStore: () => ({ addToCart }) }));
-vi.mock("@/hooks/useCatalog", () => ({ useCatalog: () => ({ products: [galleryProduct] }) }));
+vi.mock("@/hooks/useCatalog", () => ({ useCatalog: () => ({ products: productList, isLoading: false }) }));
 vi.mock("@/lib/catalog", () => ({
   categorySlug: (category: string) => category.toLowerCase(),
   products: [galleryProduct],
@@ -41,8 +44,11 @@ vi.mock("wouter", () => ({
 import ProductPage from "../client/src/pages/ProductPage";
 
 describe("interações da galeria do produto", () => {
+  afterEach(() => cleanup());
+
   beforeEach(() => {
     addToCart.mockClear();
+    productList.splice(0, productList.length, galleryProduct);
   });
 
   it("troca a imagem ativa ao clicar em miniatura e nas setas", () => {
@@ -71,5 +77,13 @@ describe("interações da galeria do produto", () => {
     fireEvent.touchStart(galleryFrame, { touches: [{ clientX: 120 }] });
     fireEvent.touchEnd(galleryFrame, { changedTouches: [{ clientX: 220 }] });
     expect(screen.getAllByAltText(/foto 1$/i).at(-1)!.getAttribute("src")).toBe(galleryProduct.images[0]);
+  });
+
+  it("não transforma uma URL de produto inexistente em item vendável de reserva", () => {
+    productList.splice(0);
+    render(<ProductPage />);
+
+    expect(screen.getByText("PRODUTO NÃO PUBLICADO")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /adicionar ao carrinho/i })).toBeNull();
   });
 });

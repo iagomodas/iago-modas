@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const helperSource = readFileSync(resolve(import.meta.dirname, "../client/src/lib/instagramOrder.ts"), "utf8");
 import {
   formatInstagramOrder,
+  getInstagramOpenUrl,
   instagramAndroidIntentUrl,
   instagramAppUrl,
   instagramDirectUrl,
@@ -12,21 +13,23 @@ import {
 } from "@/lib/instagramOrder";
 
 describe("pedido pelo Instagram", () => {
-  it("usa o perfil oficial da Overzied Modas como destino", () => {
-    expect(INSTAGRAM_HANDLE).toBe("overziedmodas9");
-    expect(instagramAppUrl).toBe("instagram://direct?username=overziedmodas9");
+  it("usa o perfil oficial da IAGO MODAS como destino", () => {
+    expect(INSTAGRAM_HANDLE).toBe("iagomodas9");
+    expect(instagramAppUrl).toBe("instagram://direct?username=iagomodas9");
     expect(instagramAndroidIntentUrl).toBe(
-      "intent://direct?username=overziedmodas9#Intent;scheme=instagram;package=com.instagram.android;end",
+      "intent://direct?username=iagomodas9#Intent;scheme=instagram;package=com.instagram.android;end",
     );
-    expect(instagramDirectUrl).toBe("https://ig.me/m/overziedmodas9");
+    expect(instagramDirectUrl).toBe("https://ig.me/m/iagomodas9");
+    expect(getInstagramOpenUrl()).toBeTruthy();
   });
 
   it("prioriza a conversa direta e usa o Instagram web como fallback", () => {
-    expect(helperSource).toContain("window.location.href = instagramAndroidIntentUrl");
-    expect(helperSource).toContain("window.location.href = instagramAppUrl");
+    expect(helperSource).toContain("return `intent://direct?username=${username}");
+    expect(helperSource).toContain("return `instagram://direct?username=${username}`");
     expect(helperSource).toContain("/Android/i.test(navigator.userAgent)");
     expect(helperSource).toContain("/iPhone|iPad|iPod/i.test(navigator.userAgent)");
-    expect(helperSource).toContain("window.location.assign(instagramDirectUrl)");
+    expect(helperSource).toContain("window.location.assign(directUrl)");
+    expect(helperSource).toContain("getInstagramOpenUrl");
     expect(helperSource).toContain("document.addEventListener(\"visibilitychange\", clearFallback");
     expect(helperSource).toContain("window.setTimeout");
   });
@@ -42,5 +45,7 @@ describe("pedido pelo Instagram", () => {
     expect(normalizedMessage).toContain("Tam.: M | Qtd.: 2 | R$ 159,80");
     expect(normalizedMessage).toContain("Subtotal dos produtos: R$ 159,80");
     expect(normalizedMessage).toContain("Frete: a combinar");
+    expect(normalizedMessage).toContain("Olá, IAGO MODAS!");
+    expect(normalizedMessage).not.toContain("OVERSIZED MODAS");
   });
 });
