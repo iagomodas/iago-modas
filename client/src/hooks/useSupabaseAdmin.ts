@@ -1,5 +1,6 @@
 import { hasSupabaseConfiguration, supabase } from "@/lib/supabase";
 import type { SupabaseOrder, SupabaseProduct } from "@/lib/supabaseTypes";
+import { createPrivateProfilePhotoUrl } from "@/lib/profilePhoto";
 import { useCallback, useEffect, useState } from "react";
 
 export function useSupabaseProducts(includeInactive = false) {
@@ -51,7 +52,8 @@ export function useSupabaseOrders() {
       const orders = (data ?? []) as SupabaseOrder[];
       const customerIds = Array.from(new Set(orders.map((order) => order.customer_user_id).filter((id): id is string => Boolean(id))));
       const { data: profiles } = customerIds.length ? await client.from("profiles").select("id, profile_photo_path").in("id", customerIds) : { data: [] as { id: string; profile_photo_path: string | null }[] };
-      const photosByCustomer = new Map((profiles ?? []).map((profile) => [profile.id, profile.profile_photo_path ? client.storage.from("customer-profile-photos").getPublicUrl(profile.profile_photo_path).data.publicUrl : null]));
+      const privatePhotos = await Promise.all((profiles ?? []).map(async (profile) => [profile.id, await createPrivateProfilePhotoUrl(client, profile.profile_photo_path)] as const));
+      const photosByCustomer = new Map(privatePhotos);
       setOrders(orders.map((order) => ({ ...order, customer_photo_url: order.customer_user_id ? photosByCustomer.get(order.customer_user_id) ?? null : null })));
       setError(null);
     }
