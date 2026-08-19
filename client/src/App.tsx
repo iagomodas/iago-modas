@@ -4,7 +4,9 @@ import { StoreShell } from "@/components/StoreShell";
 import NotFound from "@/pages/NotFound";
 import { Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import { consumeOAuthReturnRoute, getPendingOAuthReturnRoute } from "@/lib/oauthReturn";
+import { supabase } from "@/lib/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { StoreProvider } from "./contexts/StoreContext";
@@ -14,6 +16,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import Home from "./pages/Home";
 import ProductPage from "./pages/ProductPage";
 import SearchPage from "./pages/SearchPage";
+import CustomerProfilePage from "./pages/CustomerProfilePage";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -25,9 +28,38 @@ function ScrollToTop() {
   return null;
 }
 
+function OAuthReturnHandler() {
+  useEffect(() => {
+    if (!supabase || !getPendingOAuthReturnRoute()) return;
+    let active = true;
+
+    const restoreDestination = () => {
+      if (!active) return;
+      const target = consumeOAuthReturnRoute();
+      if (target) window.location.hash = `#${target}`;
+    };
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) restoreDestination();
+    });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) restoreDestination();
+    });
+
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  return null;
+}
+
 function StoreRoutes() {
   return (
     <WouterRouter hook={useHashLocation}>
+      <OAuthReturnHandler />
       <ScrollToTop />
     <Switch>
       <Route path={"/admin"} component={AdminPage} />
@@ -38,6 +70,7 @@ function StoreRoutes() {
         <Route path={"/produto/:slug"} component={ProductPage} />
         <Route path={"/buscar"} component={SearchPage} />
         <Route path={"/checkout"} component={CheckoutPage} />
+        <Route path={"/perfil"} component={CustomerProfilePage} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
         </Switch>

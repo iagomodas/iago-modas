@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getOAuthReturnUrl } from "@/lib/oauthReturn";
 
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
@@ -8,7 +9,7 @@ export const startLogin = async () => {
     window.alert("A conexão com Supabase ainda não foi configurada para esta loja.");
     return;
   }
-  const redirectTo = new URL(`${import.meta.env.BASE_URL}#/admin`, window.location.origin).toString();
+  const redirectTo = getOAuthReturnUrl("/admin");
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo },
