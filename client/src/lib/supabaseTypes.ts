@@ -14,6 +14,10 @@ export type SupabaseProduct = {
   badge: string | null;
   accent_color: string;
   stock: number;
+  shipping_weight_grams?: number;
+  shipping_length_cm?: number;
+  shipping_width_cm?: number;
+  shipping_height_cm?: number;
   is_active: boolean;
   created_at: string;
 };
@@ -38,7 +42,13 @@ export type SupabaseOrder = {
   order_status?: string;
   tracking_code?: string | null;
   customer_photo_url?: string | null;
+  payment_provider?: string | null;
+  payment_provider_reference?: string | null;
+  payment_webhook_status?: "not_configured" | "pending" | "verified" | "rejected";
+  payment_transition_state?: FuturePaymentTransitionState;
 };
+
+export type FuturePaymentTransitionState = "manual_pending" | "webhook_pending" | "paid" | "rejected";
 
 export type SupabaseCustomerProfile = {
   id: string;
