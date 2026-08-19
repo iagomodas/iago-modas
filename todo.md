@@ -132,6 +132,10 @@
 - [x] Não armazenar dados de cartão, chaves Pix privadas ou credenciais bancárias no site.
 - [x] Manter RLS e permissões administrativas restritas ao role `admin`.
 - [x] Documentar que pagamentos continuam sendo combinados diretamente pelo Instagram enquanto não houver gateway.
+- [ ] Documentar a arquitetura de evolução para gateway de pagamento futuro, com Pix e cartão processados pelo provedor e confirmação automática por webhook, sem ativar cobranças agora.
+- [ ] Documentar a preparação para cálculo de frete futuro, com dados de origem, peso e dimensões de produtos, modalidades de entrega e integração posterior com um serviço autorizado.
+- [ ] Implementar configurações inativas e estados de pedido para testar, sem cobrança real, a transição futura para pagamentos automáticos e confirmação por webhook.
+- [ ] Implementar dados de produto e testes simulados para cotação futura de frete, mantendo o frete manual atual até a contratação de um provedor.
 - [ ] Responsável testar em Android ou iPhone a abertura do Direct do Instagram a partir do checkout publicado e informar se abre a conversa diretamente ou pede o toque em “Mensagem”.
 - [x] Diagnosticar e corrigir a falha de registro de pedido exibida no checkout Android antes da abertura do Instagram; produtos locais de reserva não são mais oferecidos como itens vendáveis em uma loja conectada ao Supabase.
 - [x] Garantir que o botão de finalizar pedido tente abrir o aplicativo Instagram no Android após registrar o pedido, mantendo cópia do resumo e link de nova tentativa como fallback; carrinhos antigos com item não publicado não chamam o RPC.
