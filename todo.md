@@ -77,6 +77,7 @@
 - [x] Gerar um arquivo ZIP completo do código-fonte atualizado como backup profissional da IAGO MODAS.
 - [x] Disponibilizar o arquivo ZIP atualizado no repositório GitHub pela interface autorizada enquanto a sincronização automática permanecer bloqueada.
 - [x] Atualizar o README público da branch principal, que ainda exibe o nome antigo e referências desatualizadas da loja.
+- [ ] Corrigir uma referência documental residual ao perfil de atendimento, trocando `@overziedmodas9` por `@iagomodas9`.
 
 ## Painel do dono
 

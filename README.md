@@ -2,7 +2,7 @@
 
 Loja virtual de moda masculina com tema escuro, detalhes em verde-neon, catálogo administrável e atendimento pelo Instagram. A aplicação é publicada como site estático no GitHub Pages e usa o Supabase para catálogo, perfis, pedidos e configurações da vitrine.
 
-> **Fluxo de compra:** o cliente faz login com Google, informa o próprio nome completo, monta o pedido e é direcionado à conversa da loja no Instagram **@overziedmodas9**. O pedido fica registrado para acompanhamento no painel; o Pix e o frete são combinados manualmente pelo dono.
+> **Fluxo de compra:** o cliente faz login com Google, informa o próprio nome completo, monta o pedido e é direcionado à conversa da loja no Instagram **@iagomodas9**. O pedido fica registrado para acompanhamento no painel; o Pix e o frete são combinados manualmente pelo dono.
 
 ## Recursos atuais
 
