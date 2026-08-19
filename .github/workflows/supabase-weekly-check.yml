@@ -19,7 +19,6 @@ jobs:
         run: |
           test -n "$VITE_SUPABASE_URL"
           test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
-
       - name: Consultar catálogo público sem modificar dados
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
