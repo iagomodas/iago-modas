@@ -15,6 +15,8 @@ export type Product = {
   slug: string;
   name: string;
   category: Category;
+  brand?: string;
+  collection?: string;
   price: number;
   oldPrice?: number;
   badge?: "NOVO" | "LANÇAMENTO";

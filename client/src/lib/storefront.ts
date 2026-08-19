@@ -7,6 +7,7 @@ export type StorefrontSettings = {
   hero_cta_label: string;
   hero_cta_path: string;
   hero_image_url: string | null;
+  logo_url: string | null;
   promotion_eyebrow: string;
   promotion_title: string;
   promotion_accent: string;
@@ -34,6 +35,19 @@ export type StorefrontSettings = {
   footer_description: string;
   footer_location: string;
   footer_hours: string;
+  local_city: string;
+  local_state: string;
+  local_pickup_enabled: boolean;
+  local_delivery_enabled: boolean;
+  local_pickup_label: string;
+  local_delivery_label: string;
+  outside_delivery_label: string;
+  outside_delivery_notice: string;
+  pix_key: string;
+  instagram_handle: string;
+  instagram_enabled: boolean;
+  whatsapp_number: string;
+  whatsapp_enabled: boolean;
   primary_color: string;
   background_color: string;
   hero_visible: boolean;
@@ -53,6 +67,7 @@ export const storefrontDefaults: StorefrontSettings = {
   hero_cta_label: "VER KITS PROMOCIONAIS",
   hero_cta_path: "/categoria/kits",
   hero_image_url: null,
+  logo_url: null,
   promotion_eyebrow: "PROMOÇÃO DA SEMANA",
   promotion_title: "KIT ESSENTIAL",
   promotion_accent: "POR R$ 149,90",
@@ -61,12 +76,12 @@ export const storefrontDefaults: StorefrontSettings = {
   promotion_cta_path: "/produto/kit-urban-essential",
   highlights_eyebrow: "COLEÇÃO",
   highlights_title: "DESTAQUES DA SEMANA",
-  highlights_description: "Peças versáteis e selecionadas para expressar a sua identidade. Encontre seu tamanho e leve a Overzied Modas com você.",
+  highlights_description: "Peças versáteis e selecionadas para expressar a sua identidade. Encontre seu tamanho e leve a IAGO MODAS com você.",
   highlights_cta_label: "VER TODOS",
   highlights_cta_path: "/categoria/camisetas",
   categories_eyebrow: "EXPLORE",
   categories_title: "ENCONTRE SEU ESTILO",
-  categories_description: "Uma seleção para cada momento, sempre com a identidade OM.",
+  categories_description: "Uma seleção para cada momento, sempre com a identidade IM.",
   benefit_one_title: "Pedido pelo Instagram",
   benefit_one_caption: "Atendimento direto com a loja",
   benefit_two_title: "Trocas em até 7 dias",
@@ -80,6 +95,19 @@ export const storefrontDefaults: StorefrontSettings = {
   footer_description: "Peças selecionadas para quem veste autenticidade.",
   footer_location: "Joaquim Gomes — AL",
   footer_hours: "",
+  local_city: "Joaquim Gomes",
+  local_state: "AL",
+  local_pickup_enabled: true,
+  local_delivery_enabled: true,
+  local_pickup_label: "Retirar em",
+  local_delivery_label: "Entrega em",
+  outside_delivery_label: "Sou de outra cidade",
+  outside_delivery_notice: "Para pedidos de outra cidade, o frete não é calculado no site: o valor será combinado com a IAGO MODAS pelo Instagram antes da postagem.",
+  pix_key: "iago765gtb@gmail.com",
+  instagram_handle: "iagomodas9",
+  instagram_enabled: true,
+  whatsapp_number: "",
+  whatsapp_enabled: false,
   primary_color: "#7affb9",
   background_color: "#0a0d10",
   hero_visible: true,
@@ -97,12 +125,13 @@ export function normalizeStorefrontSettings(value: Partial<StorefrontSettings> |
   return {
     announcement_text: text(source.announcement_text, storefrontDefaults.announcement_text),
     hero_eyebrow: text(source.hero_eyebrow, storefrontDefaults.hero_eyebrow),
-    hero_title: text(source.hero_title, storefrontDefaults.hero_title),
+    hero_title: text(source.hero_title, storefrontDefaults.hero_title).replace(/\\n/g, "\n"),
     hero_accent: text(source.hero_accent, storefrontDefaults.hero_accent),
     hero_description: text(source.hero_description, storefrontDefaults.hero_description),
     hero_cta_label: text(source.hero_cta_label, storefrontDefaults.hero_cta_label),
     hero_cta_path: text(source.hero_cta_path, storefrontDefaults.hero_cta_path),
     hero_image_url: typeof source.hero_image_url === "string" && source.hero_image_url.trim() ? source.hero_image_url.trim() : null,
+    logo_url: typeof source.logo_url === "string" && source.logo_url.trim() ? source.logo_url.trim() : null,
     promotion_eyebrow: text(source.promotion_eyebrow, storefrontDefaults.promotion_eyebrow),
     promotion_title: text(source.promotion_title, storefrontDefaults.promotion_title),
     promotion_accent: text(source.promotion_accent, storefrontDefaults.promotion_accent),
@@ -130,6 +159,19 @@ export function normalizeStorefrontSettings(value: Partial<StorefrontSettings> |
     footer_description: text(source.footer_description, storefrontDefaults.footer_description),
     footer_location: text(source.footer_location, storefrontDefaults.footer_location),
     footer_hours: text(source.footer_hours, storefrontDefaults.footer_hours),
+    local_city: text(source.local_city, storefrontDefaults.local_city),
+    local_state: text(source.local_state, storefrontDefaults.local_state).toUpperCase().slice(0, 2),
+    local_pickup_enabled: typeof source.local_pickup_enabled === "boolean" ? source.local_pickup_enabled : storefrontDefaults.local_pickup_enabled,
+    local_delivery_enabled: typeof source.local_delivery_enabled === "boolean" ? source.local_delivery_enabled : storefrontDefaults.local_delivery_enabled,
+    local_pickup_label: text(source.local_pickup_label, storefrontDefaults.local_pickup_label),
+    local_delivery_label: text(source.local_delivery_label, storefrontDefaults.local_delivery_label),
+    outside_delivery_label: text(source.outside_delivery_label, storefrontDefaults.outside_delivery_label),
+    outside_delivery_notice: text(source.outside_delivery_notice, storefrontDefaults.outside_delivery_notice),
+    pix_key: text(source.pix_key, storefrontDefaults.pix_key),
+    instagram_handle: text(source.instagram_handle, storefrontDefaults.instagram_handle).replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, ""),
+    instagram_enabled: typeof source.instagram_enabled === "boolean" ? source.instagram_enabled : storefrontDefaults.instagram_enabled,
+    whatsapp_number: typeof source.whatsapp_number === "string" ? source.whatsapp_number.replace(/\D/g, "") : storefrontDefaults.whatsapp_number,
+    whatsapp_enabled: typeof source.whatsapp_enabled === "boolean" ? source.whatsapp_enabled : storefrontDefaults.whatsapp_enabled,
     primary_color: /^#[0-9A-Fa-f]{6}$/.test(String(source.primary_color ?? "")) ? String(source.primary_color) : storefrontDefaults.primary_color,
     background_color: /^#[0-9A-Fa-f]{6}$/.test(String(source.background_color ?? "")) ? String(source.background_color) : storefrontDefaults.background_color,
     hero_visible: typeof source.hero_visible === "boolean" ? source.hero_visible : storefrontDefaults.hero_visible,

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { normalizeLegacyOAuthCallbackInBrowser } from "@/lib/oauthReturn";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -8,6 +9,10 @@ const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string |
  * service_role nunca deve ser inserida no frontend ou neste arquivo.
  */
 export const hasSupabaseConfiguration = Boolean(url && publishableKey);
+
+if (hasSupabaseConfiguration && typeof window !== "undefined") {
+  normalizeLegacyOAuthCallbackInBrowser();
+}
 
 export const supabase = hasSupabaseConfiguration
   ? createClient(url!, publishableKey!, {
