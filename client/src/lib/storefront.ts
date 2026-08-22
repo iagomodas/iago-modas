@@ -100,8 +100,11 @@ export function replaceInstagramMentionWhenWhatsAppOnly(value: string, settings:
 
 export function resolveStorefrontImage(value: string | null | undefined, fallback: string) {
   const configuredImage = value?.trim();
-  const legacyGithubLogo = "https://raw.githubusercontent.com/iagomodas/iago-modas/";
-  if (configuredImage?.startsWith("/manus-storage/") || configuredImage?.startsWith(legacyGithubLogo)) return fallback;
+  const legacyGithubLogoPrefixes = [
+    "https://raw.githubusercontent.com/iagomodas/iago-modas/",
+    "https://raw.githubusercontent.com/iagomodas07/iagomodas/",
+  ];
+  if (configuredImage?.startsWith("/manus-storage/") || legacyGithubLogoPrefixes.some((prefix) => configuredImage?.startsWith(prefix))) return fallback;
   return configuredImage || fallback;
 }
 

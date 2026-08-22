@@ -15,5 +15,17 @@ export async function createPrivateProfilePhotoUrl(
   const { data, error } = await client.storage
     .from(PROFILE_PHOTO_BUCKET)
     .createSignedUrl(profilePhotoPath, SIGNED_URL_TTL_SECONDS);
-  return error || !data?.signedUrl ? null : data.signedUrl;
+  if (!error && data?.signedUrl) {
+    // A mesma foto pode ser substituída mantendo o mesmo caminho. O marcador
+    // impede que o navegador mostre uma cópia antiga que ficou em cache.
+    const separator = data.signedUrl.includes("?") ? "&" : "?";
+    return `${data.signedUrl}${separator}v=${Date.now()}`;
+  }
+
+  // Mantém a foto privada, mas oferece uma alternativa quando o navegador não
+  // consegue abrir a URL assinada imediatamente após o envio.
+  const { data: file, error: downloadError } = await client.storage
+    .from(PROFILE_PHOTO_BUCKET)
+    .download(profilePhotoPath);
+  return downloadError || !file ? null : URL.createObjectURL(file);
 }

@@ -58,3 +58,18 @@ export const toMoney = (value: number) =>
 
 export const categorySlug = (category: string) =>
   category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+export function productModel(product: Pick<Product, "collection">): string | undefined {
+  const value = product.collection?.trim();
+  return value || undefined;
+}
+
+export function categoryModels(products: Product[]): string[] {
+  return Array.from(
+    new Set(
+      products
+        .map(productModel)
+        .filter((model): model is string => Boolean(model)),
+    ),
+  ).sort((left, right) => left.localeCompare(right, "pt-BR"));
+}

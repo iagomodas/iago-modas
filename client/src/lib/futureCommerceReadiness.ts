@@ -21,6 +21,24 @@ export type PaymentWebhookSimulation = {
 
 export type FuturePaymentTransitionState = "manual_pending" | "webhook_pending" | "paid" | "rejected";
 
+export type FutureIntegrationCheck = {
+  ready: boolean;
+  missing: string[];
+};
+
+export type FutureCommerceActivationInput = {
+  paymentsEnabled: boolean;
+  webhookEnabled: boolean;
+  paymentProvider: "manual" | "mercado_pago";
+  shippingEnabled: boolean;
+  shippingProvider: "manual" | "melhor_envio" | "correios";
+  shippingOriginPostalCode: string;
+  hasMercadoPagoAccessToken: boolean;
+  hasMercadoPagoWebhookSecret: boolean;
+  hasStoreUrl: boolean;
+  hasCorreiosBearerToken: boolean;
+};
+
 export function normalizeBrazilianCep(value: string): string | null {
   const digits = value.replace(/\D/g, "");
   return digits.length === 8 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : null;
@@ -66,4 +84,36 @@ export function resolveFuturePaymentTransitionState(input: {
   if (input.webhookStatus === "approved") return "paid";
   if (input.webhookStatus === "rejected") return "rejected";
   return "webhook_pending";
+}
+
+export function checkMercadoPagoReadiness(input: Pick<FutureCommerceActivationInput, "paymentProvider" | "hasMercadoPagoAccessToken" | "hasMercadoPagoWebhookSecret" | "hasStoreUrl">): FutureIntegrationCheck {
+  const missing: string[] = [];
+  if (input.paymentProvider !== "mercado_pago") missing.push("Mercado Pago selecionado como provedor");
+  if (!input.hasMercadoPagoAccessToken) missing.push("credencial de acesso do Mercado Pago no ambiente seguro");
+  if (!input.hasMercadoPagoWebhookSecret) missing.push("segredo de assinatura do webhook no ambiente seguro");
+  if (!input.hasStoreUrl) missing.push("endereço público da loja no ambiente seguro");
+  return { ready: missing.length === 0, missing };
+}
+
+export function checkCorreiosReadiness(input: Pick<FutureCommerceActivationInput, "shippingProvider" | "shippingOriginPostalCode" | "hasCorreiosBearerToken">): FutureIntegrationCheck {
+  const missing: string[] = [];
+  if (input.shippingProvider !== "correios") missing.push("Correios selecionado como provedor");
+  if (!normalizeBrazilianCep(input.shippingOriginPostalCode)) missing.push("CEP de origem da loja com 8 dígitos");
+  if (!input.hasCorreiosBearerToken) missing.push("token dos Correios no ambiente seguro");
+  return { ready: missing.length === 0, missing };
+}
+
+export function canCreateFuturePaymentPreference(input: Pick<FutureCommerceActivationInput, "paymentsEnabled" | "webhookEnabled" | "paymentProvider" | "hasMercadoPagoAccessToken" | "hasMercadoPagoWebhookSecret" | "hasStoreUrl">): FutureIntegrationCheck {
+  const readiness = checkMercadoPagoReadiness(input);
+  const missing = [...readiness.missing];
+  if (!input.paymentsEnabled) missing.unshift("ativação de pagamento pelo administrador");
+  if (!input.webhookEnabled) missing.unshift("ativação de notificações pelo administrador");
+  return { ready: missing.length === 0, missing };
+}
+
+export function canRequestFutureShippingQuote(input: Pick<FutureCommerceActivationInput, "shippingEnabled" | "shippingProvider" | "shippingOriginPostalCode" | "hasCorreiosBearerToken">): FutureIntegrationCheck {
+  const readiness = checkCorreiosReadiness(input);
+  const missing = [...readiness.missing];
+  if (!input.shippingEnabled) missing.unshift("ativação de frete pelo administrador");
+  return { ready: missing.length === 0, missing };
 }
