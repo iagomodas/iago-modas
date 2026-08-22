@@ -4,8 +4,9 @@ import { StoreShell } from "@/components/StoreShell";
 import NotFound from "@/pages/NotFound";
 import { Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
-import React, { useEffect } from "react";
-import { consumeOAuthReturnRoute, getPendingOAuthReturnRoute } from "@/lib/oauthReturn";
+import React, { useEffect, useState } from "react";
+import { consumeOAuthReturnRoute, getPendingOAuthReturnRoute, hasOAuthCallbackResponse } from "@/lib/oauthReturn";
+import { normalizeHashRoute } from "@/lib/searchRouting";
 import { supabase } from "@/lib/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -28,62 +29,119 @@ function ScrollToTop() {
   return null;
 }
 
-function OAuthReturnHandler() {
-  useEffect(() => {
-    if (!supabase || !getPendingOAuthReturnRoute()) return;
-    let active = true;
+function useSearchAwareHashLocation() {
+  const [location, navigate] = useHashLocation();
+  return [normalizeHashRoute(location), navigate] as [string, typeof navigate];
+}
 
-    const restoreDestination = () => {
+function OAuthReturnGuard({ children }: { children: React.ReactNode }) {
+  const [isHandlingReturn, setIsHandlingReturn] = useState(
+    () => Boolean(supabase && (getPendingOAuthReturnRoute() || hasOAuthCallbackResponse())),
+  );
+
+  useEffect(() => {
+    const supabaseClient = supabase;
+    if (!supabaseClient || (!getPendingOAuthReturnRoute() && !hasOAuthCallbackResponse())) {
+      setIsHandlingReturn(false);
+      return;
+    }
+
+    let active = true;
+    let fallbackTimer: number | undefined;
+
+    const restoreDestination = async (session: { user?: { id?: string } } | null) => {
+      if (!active || isRestoring) return;
+      isRestoring = true;
+      // Se a query de destino se perder no redirecionamento, o fragmento ainda
+      // é um callback válido. Clientes voltam ao perfil e administradores são
+      // identificados logo em seguida pela consulta de papel.
+      let destination = consumeOAuthReturnRoute() ?? "/perfil";
+      if (session?.user?.id) {
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (profile?.role === "admin") {
+          destination = "/admin";
+        }
+      }
+
       if (!active) return;
-      const target = consumeOAuthReturnRoute();
-      if (target) window.location.hash = `#${target}`;
+      window.location.hash = `#${destination}`;
+      window.requestAnimationFrame(() => {
+        if (active) setIsHandlingReturn(false);
+      });
     };
 
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) restoreDestination();
+    let isRestoring = false;
+
+    void supabaseClient.auth.getSession().then(({ data }) => {
+      if (data.session) void restoreDestination(data.session);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) restoreDestination();
+    const { data } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (session) void restoreDestination(session);
     });
+
+    fallbackTimer = window.setTimeout(() => {
+      if (!active) return;
+      consumeOAuthReturnRoute();
+      window.location.hash = "#/";
+      setIsHandlingReturn(false);
+    }, 8000);
 
     return () => {
       active = false;
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
       data.subscription.unsubscribe();
     };
   }, []);
 
-  return null;
+  if (!isHandlingReturn) return <>{children}</>;
+
+  return (
+    <main
+      className="flex min-h-screen items-center justify-center bg-[#08090c] px-6 text-center text-white"
+      aria-live="polite"
+    >
+      <section className="max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-10 shadow-2xl">
+        <div className="mx-auto mb-5 h-8 w-8 animate-spin rounded-full border-2 border-emerald-300/25 border-t-emerald-300" />
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">IAGO MODAS</p>
+        <h1 className="mt-3 text-xl font-semibold">Concluindo seu login</h1>
+        <p className="mt-2 text-sm leading-6 text-white/65">Aguarde um instante enquanto abrimos sua conta com segurança.</p>
+      </section>
+    </main>
+  );
 }
 
 function StoreRoutes() {
   return (
-    <WouterRouter hook={useHashLocation}>
-      <OAuthReturnHandler />
-      <ScrollToTop />
-    <Switch>
-      <Route path={"/admin"} component={AdminPage} />
-      <StoreShell>
+    <WouterRouter hook={useSearchAwareHashLocation}>
+      <OAuthReturnGuard>
+        <ScrollToTop />
         <Switch>
-        <Route path={"/"} component={Home} />
-        <Route path={"/categoria/:slug"} component={CategoryPage} />
-        <Route path={"/produto/:slug"} component={ProductPage} />
-        <Route path={"/buscar"} component={SearchPage} />
-        <Route path={"/checkout"} component={CheckoutPage} />
-        <Route path={"/perfil"} component={CustomerProfilePage} />
-        <Route path={"/404"} component={NotFound} />
-        <Route component={NotFound} />
+          <Route path={"/admin"} component={AdminPage} />
+          <StoreShell>
+            <Switch>
+              <Route path={"/"} component={Home} />
+              <Route path={"/categoria/:slug"} component={CategoryPage} />
+              <Route path={"/produto/:slug"} component={ProductPage} />
+              <Route path={"/buscar"} component={SearchPage} />
+              <Route path={"/checkout"} component={CheckoutPage} />
+              <Route path={"/sacola"} component={CheckoutPage} />
+              <Route path={"/finalizar-pedido"} component={CheckoutPage} />
+              <Route path={"/perfil"} component={CustomerProfilePage} />
+              <Route path={"/404"} component={NotFound} />
+              <Route component={NotFound} />
+            </Switch>
+          </StoreShell>
         </Switch>
-      </StoreShell>
-    </Switch>
+      </OAuthReturnGuard>
     </WouterRouter>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
