@@ -32,6 +32,32 @@ export function useCatalog() {
     if (hasSupabaseConfiguration) void refreshSupabase();
   }, [refreshSupabase]);
 
+  useEffect(() => {
+    const client = supabase;
+    if (!client || typeof client.channel !== "function") return;
+
+    // Cada montagem recebe um canal próprio. Isso impede que uma atualização rápida
+    // da página (incluindo HMR no desenvolvimento) tente adicionar callbacks a um
+    // canal já inscrito e derrube toda a vitrine.
+    const channelNonce =
+      typeof globalThis.crypto?.randomUUID === "function"
+        ? globalThis.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const channel = client.channel(`iago-modas-storefront-products-${channelNonce}`);
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "products" },
+      () => {
+        void refreshSupabase();
+      },
+    );
+    channel.subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [refreshSupabase]);
+
   const isConnectedToSupabase = hasSupabaseConfiguration;
 
   return {
