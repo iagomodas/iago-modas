@@ -145,6 +145,7 @@ describe("checkout com configurações da vitrine", () => {
     expect(screen.getByRole("region", { name: /chave pix da loja/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /copiar chave pix/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /abrir conversa no instagram/i })).toBeTruthy();
+    expect(clearCart).toHaveBeenCalledOnce();
     expect(openInstagramApp).not.toHaveBeenCalled();
     expect(window.location.hash).toBe("");
   });

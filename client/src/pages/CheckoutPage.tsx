@@ -268,12 +268,16 @@ export default function CheckoutPage() {
       } as never);
       if (error) throw error;
       const registeredSummary = summary;
-      await copyText(registeredSummary);
       const number = Array.isArray(data) ? (data[0] as { order_number?: string })?.order_number : undefined;
       setRegisteredOrder({ number, channel: "instagram", paymentMethod: selectedPaymentMethod as "pix" | "cash" | "credit", summary: registeredSummary, cartFingerprint });
       window.sessionStorage.removeItem(CHECKOUT_REQUEST_TOKEN_STORAGE_KEY);
-      setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo foi copiado; toque em abrir o Instagram quando estiver pronto.`);
       clearCart();
+      try {
+        await copyText(registeredSummary);
+        setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo foi copiado; toque em abrir o Instagram quando estiver pronto.`);
+      } catch {
+        setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo ficou disponível nesta tela para copiar manualmente.`);
+      }
     } catch (error) {
       submitLockRef.current = false;
       let copied = false;
