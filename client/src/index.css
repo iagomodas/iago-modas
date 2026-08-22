@@ -13,13 +13,15 @@ button, input { font: inherit; }
 .display-title { font-size: clamp(2.85rem, 6vw, 5.45rem); font-weight: 800; letter-spacing: -.07em; line-height: .93; }
 .section-title { font-size: clamp(1.75rem, 3.3vw, 2.75rem); font-weight: 800; letter-spacing: -.06em; line-height: .98; }
 .eyebrow { font-family: "DM Mono", monospace; font-size: 10px; font-weight: 500; letter-spacing: .18em; color: rgba(255,255,255,.5); }
-.button-primary, .button-secondary, .button-instagram { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 0 18px; font-size: 11px; font-weight: 800; letter-spacing: .045em; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, color 160ms ease, border-color 160ms ease; }
+.button-primary, .button-secondary, .button-instagram, .button-whatsapp { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 0 18px; font-size: 11px; font-weight: 800; letter-spacing: .045em; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, color 160ms ease, border-color 160ms ease; }
 .button-primary { background: #7affb9; color: #07110b; }
 .button-primary:hover { background: #c0ffdb; transform: translateY(-1px); }
 .button-secondary { border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.9); background: rgba(255,255,255,.02); }
 .button-secondary:hover { border-color: #7affb9; color: #7affb9; }
 .button-instagram { width: 100%; background: linear-gradient(120deg, #6f2dbd, #c13584 48%, #f77737); color: #fff; }
 .button-instagram:hover { background: linear-gradient(120deg, #7e3cc7, #d84a96 48%, #fb8b4d); transform: translateY(-1px); }
+.button-whatsapp { width: 100%; background: #25D366; color: #062b14; }
+.button-whatsapp:hover { background: #55e58e; transform: translateY(-1px); }
 .icon-button { display: inline-flex; height: 38px; width: 38px; align-items: center; justify-content: center; border-radius: 50%; color: rgba(255,255,255,.75); transition: background 160ms ease, color 160ms ease; }
 .icon-button:hover { background: rgba(255,255,255,.08); color: #7affb9; }
 .offer-panel { position: relative; background: linear-gradient(115deg, #152721 0%, #111920 45%, #11151a 100%); }
@@ -47,9 +49,9 @@ button, input { font: inherit; }
 .field-input { width: 100%; height: 43px; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; background: rgba(0,0,0,.16); padding: 0 12px; color: #fff; font-size: 13px; outline: none; transition: border-color 160ms ease; }
 .field-input::placeholder { color: rgba(255,255,255,.28); }.field-input:focus { border-color: #7affb9; }
 .payment-option { display: flex; min-height: 78px; gap: 10px; align-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 12px; padding: 12px; text-align: left; color: rgba(255,255,255,.7); transition: all 160ms ease; }.payment-option:hover, .payment-option.active { border-color: #7affb9; background: rgba(122,255,185,.06); color: #fff; }.payment-option svg { color: #7affb9; }.payment-option span { display: grid; gap: 2px; font-size: 12px; }.payment-option small { color: rgba(255,255,255,.42); font-size: 10px; }
-.instagram-float { position: fixed; z-index: 30; right: 20px; bottom: 20px; display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; background: linear-gradient(120deg, #7a2ac2, #c13584 48%, #ef7d36); padding: 13px 16px; color: #fff; box-shadow: 0 12px 30px rgba(0,0,0,.35); font-size: 10px; font-weight: 800; letter-spacing: .06em; transition: transform 160ms cubic-bezier(.23,1,.32,1); }.instagram-float:hover { transform: translateY(-2px); }
+.instagram-float, .whatsapp-float { position: fixed; z-index: 30; right: 20px; bottom: 20px; display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; padding: 13px 16px; box-shadow: 0 12px 30px rgba(0,0,0,.35); font-size: 10px; font-weight: 800; letter-spacing: .06em; transition: transform 160ms cubic-bezier(.23,1,.32,1); }.instagram-float { background: linear-gradient(120deg, #7a2ac2, #c13584 48%, #ef7d36); color: #fff; }.whatsapp-float { background: #25D366; color: #062b14; }.instagram-float:hover, .whatsapp-float:hover { transform: translateY(-2px); }
 .no-scrollbar::-webkit-scrollbar { display: none; }.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-@media (max-width: 640px) { .container { width: min(100% - 1.25rem, 1180px); }.display-title { letter-spacing: -.08em; }.promo-track { animation-duration: 20s; }.instagram-float span { display: none; }.instagram-float { right: 14px; bottom: 14px; padding: 14px; } header > .no-scrollbar { scroll-snap-type: x mandatory; } header > .no-scrollbar > a { scroll-snap-align: start; } }
+@media (max-width: 640px) { .container { width: min(100% - 1.25rem, 1180px); }.display-title { letter-spacing: -.08em; }.promo-track { animation-duration: 20s; }.instagram-float span, .whatsapp-float span { display: none; }.instagram-float, .whatsapp-float { right: 14px; bottom: 14px; padding: 14px; } header > .no-scrollbar { scroll-snap-type: x mandatory; } header > .no-scrollbar > a { scroll-snap-align: start; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
 .admin-label { display: grid; gap: 7px; color: hsl(var(--muted-foreground)); font-size: 12px; font-weight: 600; }

@@ -181,6 +181,10 @@ export default function CheckoutPage() {
       setMessage("Aguarde enquanto a loja confirma os produtos publicados.");
       return;
     }
+    if (contactChannel && typeof window !== "undefined" && !window.confirm(`Confirmar o pedido e abrir o atendimento pelo ${contactName}?`)) {
+      setMessage("Pedido não enviado. Confirme quando quiser para abrir o atendimento.");
+      return;
+    }
     const hasUnpublishedCartItem = cart.some((item) => !publishedProducts.some((product) => product.id === item.id));
     if (hasUnpublishedCartItem) {
       let copied = false;
