@@ -7,6 +7,17 @@ import { AdminSalesOverview } from "@/components/AdminSalesOverview";
 import { SHIPPING_LABEL_ORDER_EVENT, ShippingLabelGenerator } from "@/components/ShippingLabelGenerator";
 import { ProductMediaPicker } from "@/components/ProductMediaPicker";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { startLogin } from "@/const";
 import {
   useSupabaseOrders,
@@ -17,6 +28,7 @@ import { categories, type Category, toMoney } from "@/lib/catalog";
 import { storefrontDefaults, storefrontUpdateForSection, type StorefrontSaveSection, type StorefrontSettings } from "@/lib/storefront";
 import { hasSupabaseConfiguration, supabase } from "@/lib/supabase";
 import type { SupabaseOrder, SupabaseProduct } from "@/lib/supabaseTypes";
+import { canPermanentlyDeleteOrder } from "@/lib/orderAdmin";
 import {
   Boxes,
   Brush,
@@ -255,6 +267,7 @@ function AdminConsole() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
   const [savingStorefront, setSavingStorefront] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [storefrontDraft, setStorefrontDraft] =
     useState<StorefrontSettings>(storefrontDefaults);
@@ -445,6 +458,33 @@ function AdminConsole() {
     );
     await operations.refresh();
   };
+  const deleteCancelledOrder = async (order: SupabaseOrder) => {
+    if (!supabase) return;
+    if (!canPermanentlyDeleteOrder(order)) {
+      setFeedback("Somente pedidos já cancelados podem ser apagados do histórico.");
+      return;
+    }
+
+    setDeletingOrderId(order.id);
+    setFeedback(null);
+    const { error, count } = await supabase
+      .from("orders")
+      .delete({ count: "exact" })
+      .eq("id", order.id)
+      .or("payment_status.eq.cancelled,order_status.eq.cancelled");
+
+    if (error) {
+      setFeedback(error.message);
+    } else if (count !== 1) {
+      setFeedback(
+        "O pedido não foi apagado porque não está mais cancelado ou sua conta não tem essa permissão.",
+      );
+    } else {
+      setFeedback(`Pedido ${order.order_number} apagado definitivamente do histórico.`);
+    }
+    setDeletingOrderId(null);
+    await operations.refresh();
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-10 text-white">
@@ -581,13 +621,16 @@ function AdminConsole() {
                   Escreva uma nova marca ou escolha uma já cadastrada. Ela aparecerá como filtro para os clientes.
                 </p>
               </Field>
-              <Field label="Coleção (opcional)">
+              <Field label="Modelo específico (opcional)">
                 <input
                   value={form.collection}
                   onChange={event => set("collection", event.target.value)}
                   className="admin-input"
-                  placeholder="Ex.: Drop Inverno 2026"
+                  placeholder="Ex.: Oversized, Polo ou Estampada"
                 />
+                <p className="mt-1 text-[11px] leading-4 text-white/45">
+                  O cliente poderá escolher este modelo ao entrar na categoria da peça.
+                </p>
               </Field>
             </div>
             <Field label="Descrição">
@@ -861,6 +904,43 @@ function AdminConsole() {
                     </p>
                   </div>
                   <p className="text-white/50">{toMoney(order.total_cents / 100)}</p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={deletingOrderId === order.id}
+                        className="border-red-300/35 px-3 text-xs text-red-100 hover:bg-red-300/10 hover:text-red-50"
+                      >
+                        {deletingOrderId === order.id ? (
+                          <Loader2 className="animate-spin" size={15} />
+                        ) : (
+                          <Trash2 size={15} />
+                        )}
+                        APAGAR
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="border-red-300/30 bg-[#151010] text-white">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Apagar pedido cancelado?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-white/65">
+                          O pedido {order.order_number} de {order.customer_name} será removido definitivamente do histórico. Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+                          MANTER HISTÓRICO
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={deletingOrderId === order.id}
+                          onClick={() => void deleteCancelledOrder(order)}
+                          className="bg-red-500 text-white hover:bg-red-400"
+                        >
+                          APAGAR DEFINITIVAMENTE
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>
