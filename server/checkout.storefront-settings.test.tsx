@@ -141,6 +141,8 @@ describe("checkout com configurações da vitrine", () => {
     })));
     expect(screen.getByRole("status").textContent).toContain("Pedido IM-0001 registrado");
     expect(screen.getByRole("heading", { name: /pedido IM-0001 enviado para a loja/i })).toBeTruthy();
+    expect(screen.getByRole("region", { name: /chave pix da loja/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /copiar chave pix/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /abrir conversa no instagram/i })).toBeTruthy();
     expect(openInstagramApp).not.toHaveBeenCalled();
     expect(window.location.hash).toBe("");
@@ -160,6 +162,8 @@ describe("checkout com configurações da vitrine", () => {
       p_delivery_mode: "local",
       p_payment_method: "cash",
     })));
+    await waitFor(() => expect(screen.queryByRole("region", { name: /chave pix da loja/i })).toBeNull());
+    expect(screen.queryByRole("button", { name: /copiar chave pix/i })).toBeNull();
   });
 
   it("preenche o endereço dos Correios apenas com os dados salvos do próprio perfil e mantém a edição disponível", async () => {
@@ -244,6 +248,8 @@ describe("checkout com configurações da vitrine", () => {
     await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
       p_payment_method: "credit",
     })));
+    await waitFor(() => expect(screen.queryByRole("region", { name: /chave pix da loja/i })).toBeNull());
+    expect(screen.queryByRole("button", { name: /copiar chave pix/i })).toBeNull();
     expect(clipboardWrite).toHaveBeenCalledWith(expect.stringContaining("Maquininha — 3x"));
   });
 });
