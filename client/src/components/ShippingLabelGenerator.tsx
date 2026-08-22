@@ -97,7 +97,7 @@ export function ShippingLabelGenerator() {
     downloadLink.click();
     downloadLink.remove();
 
-    const printWindow = window.open(documentUrl, "_blank");
+    const printWindow = window.open("", "_blank");
     if (!printWindow) {
       window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
       setNotice("A etiqueta foi baixada. Abra o arquivo HTML baixado para imprimir; o navegador bloqueou a janela automática.");
@@ -105,6 +105,9 @@ export function ShippingLabelGenerator() {
     }
 
     printWindow.opener = null;
+    printWindow.document.open("text/html", "replace");
+    printWindow.document.write(documentHtml);
+    printWindow.document.close();
     printWindow.addEventListener("load", () => {
       printWindow.focus();
       window.setTimeout(() => printWindow.print(), 250);

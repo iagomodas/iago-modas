@@ -93,6 +93,7 @@ export default function CustomerOrdersPage() {
   const { settings } = useStorefrontSettings();
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -112,10 +113,12 @@ export default function CustomerOrdersPage() {
       if (authError) throw authError;
       if (!auth.user) {
         setSignedIn(false);
+        setUserId(null);
         setLoading(false);
         return;
       }
       setSignedIn(true);
+      setUserId(auth.user.id);
       const { data, error: ordersError } = await client
         .from("orders")
         .select(orderQuery)
@@ -134,6 +137,26 @@ export default function CustomerOrdersPage() {
   useEffect(() => {
     void loadOrders();
   }, []);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client || !signedIn || !userId) return;
+    const channel = client
+      .channel(`iago-modas-customer-orders-${userId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `customer_user_id=eq.${userId}` }, () => {
+        void loadOrders();
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "orders", filter: `customer_user_id=eq.${userId}` }, () => {
+        void loadOrders();
+      })
+      .subscribe();
+    const handleFocus = () => void loadOrders();
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      void client.removeChannel(channel);
+    };
+  }, [signedIn, userId]);
 
   async function signIn() {
     if (!supabase) return;

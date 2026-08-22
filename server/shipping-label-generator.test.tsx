@@ -11,6 +11,11 @@ import { ShippingLabelGenerator } from "../client/src/components/ShippingLabelGe
 
 const printWindow = {
   opener: window,
+  document: {
+    open: vi.fn(),
+    write: vi.fn(),
+    close: vi.fn(),
+  },
   focus: vi.fn(),
   print: vi.fn(),
   addEventListener: vi.fn(),
@@ -44,7 +49,8 @@ const printWindow = {
 
     expect(downloadedFile).toBe("etiqueta-IM-260822-7D5024.html");
     expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(window.open).toHaveBeenCalledWith("blob:https://iagomodas.example/label", "_blank");
+    expect(window.open).toHaveBeenCalledWith("", "_blank");
+    expect(printWindow.document.write).toHaveBeenCalledWith(expect.stringContaining("Etiqueta de endereço"));
     expect(printWindow.addEventListener).toHaveBeenCalledWith("load", expect.any(Function), { once: true });
     expect(screen.getByRole("status").textContent).toContain("Etiqueta baixada e aberta para impressão");
   });
