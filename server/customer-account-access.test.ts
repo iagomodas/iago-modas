@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const shell = readFileSync(resolve(process.cwd(), "client/src/components/StoreShell.tsx"), "utf8");
 const profile = readFileSync(resolve(process.cwd(), "client/src/pages/CustomerProfilePage.tsx"), "utf8");
 const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/202608180004_customer_profile_photo.sql"), "utf8");
+const photoReturnFix = readFileSync(resolve(process.cwd(), "supabase/migrations/202608200003_fix_update_own_profile_photo_return.sql"), "utf8");
 
 describe("acesso e conta do cliente", () => {
   it("mostra um acesso de conta no cabeçalho sem usar automaticamente a foto do Google", () => {
@@ -13,6 +14,20 @@ describe("acesso e conta do cliente", () => {
     expect(shell).toContain('aria-label="Abrir minha conta"');
     expect(shell).toContain('href="/perfil"');
     expect(shell).not.toContain("user_metadata.avatar_url");
+  });
+
+  it("limpa o estado da conta e sai imediatamente do perfil quando o cliente toca em Sair", () => {
+    expect(shell).toContain('setAccount({ signedIn: false, displayName: "", photoUrl: null, role: null });');
+    expect(shell).toContain('navigate("/", { replace: true });');
+    expect(shell).toContain('await supabase.auth.signOut();');
+  });
+
+  it("direciona a única conta administradora ao painel do dono, sem exibir o perfil de cliente", () => {
+    expect(profile).toContain('import { Link, useLocation } from "wouter";');
+    expect(profile).toContain('const [, navigate] = useLocation();');
+    expect(profile).toContain("delivery_state, role");
+    expect(profile).toContain('if (profile?.role === "admin")');
+    expect(profile).toContain('navigate("/admin", { replace: true });');
   });
 
   it("oferece edição de foto opcional, nome e endereço próprio do cliente", () => {
@@ -24,10 +39,26 @@ describe("acesso e conta do cliente", () => {
     expect(profile).toContain("Dados de entrega");
   });
 
-  it("aceita somente formatos de imagem permitidos e tamanho máximo de 3 MB", () => {
+  it("aceita fotos reais de celular para otimização local somente nos formatos permitidos", () => {
     expect(profile).toContain('accept="image/jpeg,image/png,image/webp"');
-    expect(profile).toContain("file.size > 3 * 1024 * 1024");
+    expect(profile).toContain("PROFILE_PHOTO_MAX_INPUT_BYTES");
+    expect(profile).toContain("file.size > PROFILE_PHOTO_MAX_INPUT_BYTES");
+    expect(profile).toContain("A foto é maior que 8 MB");
+    expect(profile).toContain("optimizeProfilePhoto(file)");
     expect(profile).toContain('supabase.storage.from("customer-profile-photos").upload');
+  });
+
+  it("preserva a foto anterior e explica falhas de envio sem ocultar o erro", () => {
+    expect(profile).toContain("const previousPhotoUrl = photoUrl");
+    expect(profile).toContain("setPhotoUrl(previousPhotoUrl)");
+    expect(profile).toContain("profilePhotoUploadError(uploadError.message)");
+  });
+
+  it("mostra uma prévia imediatamente e recupera a imagem privada sem cache antigo", () => {
+    expect(profile).toContain("URL.createObjectURL(optimized.file)");
+    expect(profile).toContain("Otimizando sua foto para enviar com qualidade e ocupar menos espaço");
+    expect(profile).toContain("createPrivateProfilePhotoUrl(supabase, nextPath)");
+    expect(profile).toContain("Foto de perfil atualizada e otimizada");
   });
 
   it("protege o armazenamento para que cada cliente administre somente a própria foto", () => {
@@ -37,5 +68,13 @@ describe("acesso e conta do cliente", () => {
     expect(migration).toContain("customer profile photos: delete own");
     expect(migration).toContain("update_own_profile_photo");
     expect(migration).toContain("auth.uid()::text");
+  });
+
+  it("persiste ou remove o caminho privado da foto sem reverter a função no fim", () => {
+    expect(photoReturnFix).toContain("create or replace function public.update_own_profile_photo");
+    expect(photoReturnFix).toContain("returns storage.vector_indexes");
+    expect(photoReturnFix).toContain("where id = auth.uid()");
+    expect(photoReturnFix).toContain("return null;");
+    expect(photoReturnFix).toContain('grant execute on function public.update_own_profile_photo(text) to "authenticated"');
   });
 });
