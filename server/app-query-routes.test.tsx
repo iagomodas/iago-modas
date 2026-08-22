@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -49,10 +50,12 @@ vi.mock("@/pages/CustomerProfilePage", () => ({ default: () => <main>Perfil</mai
 vi.mock("@/pages/NotFound", () => ({ default: () => <main>Página não encontrada</main> }));
 
 import App from "../client/src/App";
+import { getOAuthReturnUrl } from "../client/src/lib/oauthReturn";
 
 describe("rotas reais da aplicação com parâmetros de consulta", () => {
   beforeEach(() => {
     window.scrollTo = vi.fn();
+    window.sessionStorage.clear();
     authMock.getSession.mockResolvedValue({ data: { session: null } });
     authMock.onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: authMock.unsubscribe } } });
     profileLookupMock.maybeSingle.mockResolvedValue({ data: { role: "customer" } });
@@ -125,6 +128,20 @@ describe("rotas reais da aplicação com parâmetros de consulta", () => {
     authMock.getSession.mockResolvedValueOnce({ data: { session: { user: { id: "customer-id" } } } });
     profileLookupMock.maybeSingle.mockResolvedValueOnce({ data: { role: "customer" } });
     window.history.replaceState({}, "", "/iago-modas/?iago_oauth_return=%2Fperfil#access_token=temporario");
+
+    render(<App />);
+
+    await vi.waitFor(() => {
+      expect(window.location.hash).toBe("#/perfil");
+    });
+    expect(screen.getByText("Perfil")).toBeTruthy();
+  });
+
+  it("recupera o perfil do cliente quando o callback remove a query de destino", async () => {
+    authMock.getSession.mockResolvedValueOnce({ data: { session: { user: { id: "customer-id" } } } });
+    profileLookupMock.maybeSingle.mockResolvedValueOnce({ data: { role: "customer" } });
+    getOAuthReturnUrl("/perfil");
+    window.history.replaceState({}, "", "/iago-modas/#access_token=temporario&refresh_token=atualizacao");
 
     render(<App />);
 
