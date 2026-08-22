@@ -290,19 +290,18 @@ export default function CheckoutPage() {
 
   if (registeredOrder) {
     const isInstagramOrder = registeredOrder.channel === "instagram";
-    const isPixOrder = registeredOrder.paymentMethod === "pix";
     return <main className="container flex min-h-[65vh] flex-col items-center justify-center py-12 text-center">
       <Check size={35} className="text-[#7affb9]" />
       <p className="eyebrow mt-4">PEDIDO REGISTRADO UMA ÚNICA VEZ</p>
       <h1 className="mt-2 text-2xl font-bold">Pedido{registeredOrder.number ? ` ${registeredOrder.number}` : ""} enviado para a loja</h1>
       <p className="mt-3 max-w-lg text-sm leading-6 text-white/60">O pedido foi enviado para a loja.</p>
       {message && <p role="status" className="mt-3 max-w-lg text-sm text-[#7affb9]">{message}</p>}
-      {isPixOrder && <section aria-label="Pagamento Pix" className="mt-6 w-full max-w-lg rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
-        <p className="text-sm font-black text-[#7affb9]">FORMA DE PAGAMENTO: PIX</p>
-        <p className="mt-2 text-xs leading-5 text-white/75">Faça o pagamento usando a chave abaixo. Depois, envie o comprovante para a IAGO MODAS pelo atendimento.</p>
+      <section aria-label="Chave Pix da loja" className="mt-6 w-full max-w-lg rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
+        <p className="text-sm font-black text-[#7affb9]">CHAVE PIX DA LOJA</p>
+        <p className="mt-2 text-xs leading-5 text-white/75">Se o pagamento for por Pix, use a chave abaixo e envie o comprovante para a IAGO MODAS pelo atendimento.</p>
         <p className="mt-3 break-all rounded-xl border border-white/10 bg-black/20 px-3 py-3 font-mono text-sm text-white">{settings.pix_key}</p>
         <button type="button" onClick={() => void copyPixKey()} className="button-primary mt-3 w-full text-xs"><Clipboard size={16} />COPIAR CHAVE PIX</button>
-      </section>}
+      </section>
       {isInstagramOrder && <section aria-label="Como enviar o pedido no Instagram" className="mt-6 w-full max-w-lg rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
         <p className="text-sm font-black text-[#7affb9]">PRÓXIMO PASSO: ENVIE A MENSAGEM NO DIRECT</p>
         <p className="mt-2 text-xs leading-5 text-white/75">Copie a mensagem e toque no botão para abrir o Instagram; depois, cole no Direct e toque em enviar.</p>
