@@ -1,8 +1,9 @@
 import { getOAuthReturnUrl } from "@/lib/oauthReturn";
 import { supabase } from "@/lib/supabase";
 import { toMoney } from "@/lib/catalog";
+import { useStorefrontSettings } from "@/hooks/useStorefrontSettings";
 import { Link } from "wouter";
-import { CheckCircle2, ChevronLeft, Clock3, Loader2, LogIn, PackageCheck, ShoppingBag, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronLeft, Clipboard, Clock3, Loader2, LogIn, PackageCheck, ShoppingBag, Trash2, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 type CustomerOrderItem = {
@@ -17,6 +18,9 @@ type CustomerOrder = {
   id: number;
   order_number: string;
   customer_name: string;
+  customer_phone: string | null;
+  postal_code: string | null;
+  address: string | null;
   payment_method: string;
   payment_status: "pending" | "approved" | "rejected" | "cancelled";
   total_cents: number;
@@ -32,7 +36,7 @@ type CustomerOrder = {
   order_items: CustomerOrderItem[];
 };
 
-const orderQuery = "id, order_number, customer_name, payment_method, payment_status, total_cents, created_at, delivery_mode, delivery_city, delivery_state, delivery_neighborhood, delivery_number, delivery_complement, order_status, tracking_code, order_items(id, product_name, size, unit_price_cents, quantity)";
+const orderQuery = "id, order_number, customer_name, customer_phone, postal_code, address, payment_method, payment_status, total_cents, created_at, delivery_mode, delivery_city, delivery_state, delivery_neighborhood, delivery_number, delivery_complement, order_status, tracking_code, order_items(id, product_name, size, unit_price_cents, quantity)";
 
 function statusFor(order: CustomerOrder) {
   if (order.payment_status === "cancelled" || order.order_status === "cancelled") return { label: "CANCELADO", className: "text-red-200", icon: XCircle };
@@ -43,9 +47,7 @@ function statusFor(order: CustomerOrder) {
 }
 
 function deliveryLabel(order: CustomerOrder) {
-  if (order.delivery_mode === "correios") {
-    return `Correios · ${order.delivery_city ?? ""}/${order.delivery_state ?? ""}`;
-  }
+  if (order.delivery_mode === "correios") return `Correios · ${order.delivery_city ?? ""}/${order.delivery_state ?? ""}`;
   return order.delivery_mode === "city_delivery" ? "Entrega local" : "Retirada na loja";
 }
 
@@ -64,7 +66,31 @@ function canCancel(order: CustomerOrder) {
     && !["shipped", "posted", "delivered"].includes(order.order_status ?? "");
 }
 
+function formatOrderAddress(order: CustomerOrder) {
+  if (order.delivery_mode !== "correios") return deliveryLabel(order);
+  return [order.address, order.delivery_number, order.delivery_complement, order.delivery_neighborhood, [order.delivery_city, order.delivery_state].filter(Boolean).join("/")].filter(Boolean).join(", ");
+}
+
+function orderMessage(order: CustomerOrder) {
+  const items = order.order_items.map((item) => `- ${item.product_name} | Tam.: ${item.size} | Qtd.: ${item.quantity}`).join("\n");
+  return `Olá, IAGO MODAS! Estou consultando o pedido ${order.order_number}.\n\n${items}\n\nTotal: ${toMoney(order.total_cents / 100)}\nRecebimento: ${formatOrderAddress(order)}\nPagamento: ${paymentLabel(order.payment_method)}\n\nAguardo a confirmação da loja. Obrigado!`;
+}
+
+async function copyText(text: string) {
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
+  const element = document.createElement("textarea");
+  element.value = text;
+  element.style.position = "fixed";
+  element.style.opacity = "0";
+  document.body.appendChild(element);
+  element.select();
+  const copied = document.execCommand("copy");
+  element.remove();
+  if (!copied) throw new Error("Não foi possível copiar");
+}
+
 export default function CustomerOrdersPage() {
+  const { settings } = useStorefrontSettings();
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -72,6 +98,7 @@ export default function CustomerOrdersPage() {
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
   async function loadOrders() {
     const client = supabase;
@@ -111,6 +138,24 @@ export default function CustomerOrdersPage() {
   async function signIn() {
     if (!supabase) return;
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: getOAuthReturnUrl("/pedidos") } });
+  }
+
+  async function copyOrder(order: CustomerOrder) {
+    try {
+      await copyText(orderMessage(order));
+      setNotice(`Mensagem do pedido ${order.order_number} copiada.`);
+    } catch {
+      setNotice("Não foi possível copiar automaticamente. Selecione os detalhes e copie manualmente.");
+    }
+  }
+
+  async function copyPixKey() {
+    try {
+      await copyText(settings.pix_key);
+      setNotice("Chave Pix copiada.");
+    } catch {
+      setNotice("Não foi possível copiar automaticamente. Selecione a chave Pix e copie manualmente.");
+    }
   }
 
   async function cancelOrder(order: CustomerOrder) {
@@ -155,10 +200,9 @@ export default function CustomerOrdersPage() {
 
   return <main className="container max-w-3xl py-10 md:py-16">
     <div className="flex flex-wrap items-center justify-between gap-4"><Link href="/" className="inline-flex items-center gap-2 text-sm text-white/55 hover:text-[#7affb9]"><ChevronLeft size={16} />Voltar para a loja</Link><Link href="/perfil" className="text-sm font-bold text-[#7affb9]">Editar meu cadastro</Link></div>
-    <section className="mt-6"><p className="eyebrow">MINHA CONTA</p><h1 className="mt-2 text-3xl font-black">MEUS PEDIDOS</h1><p className="mt-3 text-sm leading-6 text-white/60">Aqui ficam os produtos dos pedidos que você confirmou no botão FINALIZAR PEDIDO. A sacola continua reservada apenas para compras em preparação.</p></section>
+    <section className="mt-6"><p className="eyebrow">MINHA CONTA</p><h1 className="mt-2 text-3xl font-black">MEUS PEDIDOS</h1><p className="mt-3 text-sm leading-6 text-white/60">Toque em um pedido para ver os detalhes, copiar a mensagem e consultar o Pix quando essa for a forma de pagamento escolhida.</p></section>
     {notice && <p role="status" className="mt-5 rounded-xl border border-[#82ffc5]/25 bg-[#82ffc5]/[.06] px-4 py-3 text-sm text-[#82ffc5]">{notice}</p>}
     {error && <p role="alert" className="mt-5 rounded-xl border border-red-300/25 bg-red-300/[.06] px-4 py-3 text-sm text-red-100">{error}</p>}
-    {!hasOrders ? <section className="mt-7 rounded-3xl border border-white/10 bg-white/[.025] p-8 text-center"><ShoppingBag size={35} className="mx-auto text-[#7affb9]" /><h2 className="mt-4 text-xl font-bold">Você ainda não tem pedidos</h2><p className="mt-2 text-sm text-white/55">Quando você finalizar uma compra, ela aparecerá aqui.</p><Link href="/" className="button-primary mt-6 inline-flex">CONTINUAR COMPRANDO</Link></section> : <div className="mt-7 space-y-5">{orders.map((order) => { const status = statusFor(order); const StatusIcon = status.icon; return <article key={order.id} className="rounded-3xl border border-white/10 bg-white/[.025] p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold tracking-[.16em] text-white/45">PEDIDO</p><h2 className="mt-1 text-lg font-black text-white">{order.order_number}</h2><p className="mt-1 text-xs text-white/45">{new Date(order.created_at).toLocaleString("pt-BR")} · {deliveryLabel(order)}</p></div><p className={`inline-flex items-center gap-2 text-xs font-black tracking-wide ${status.className}`}><StatusIcon size={16} />{status.label}</p></div><div className="mt-5 divide-y divide-white/10 rounded-2xl border border-white/10 bg-black/15">{order.order_items.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-semibold">{item.product_name}</p><p className="mt-1 text-xs text-white/45">Tamanho {item.size} · Quantidade {item.quantity}</p></div><strong className="shrink-0">{toMoney(item.unit_price_cents * item.quantity / 100)}</strong></div>)}</div><div className="mt-5 flex flex-wrap items-end justify-between gap-4"><div className="text-xs leading-5 text-white/50"><p>Pagamento: <strong className="text-white/75">{paymentLabel(order.payment_method)}</strong></p>{order.tracking_code && <p>Código de rastreio: <strong className="text-white/75">{order.tracking_code}</strong></p>}</div><div className="text-right"><p className="text-xs text-white/45">Total</p><p className="text-xl font-black text-[#82ffc5]">{toMoney(order.total_cents / 100)}</p></div></div>{canCancel(order) ? <button type="button" onClick={() => void cancelOrder(order)} disabled={cancellingId !== null || deletingId !== null} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-red-300/35 px-4 py-2.5 text-xs font-bold text-red-100 transition hover:bg-red-300/10 disabled:opacity-60">{cancellingId === order.id && <Loader2 size={15} className="animate-spin" />}CANCELAR PEDIDO</button> : (order.payment_status === "cancelled" || order.order_status === "cancelled") && <button type="button" onClick={() => void deleteCancelledOrder(order)} disabled={deletingId !== null} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-xs font-bold text-white/70 transition hover:bg-white/10 disabled:opacity-60">{deletingId === order.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}APAGAR DO MEU HISTÓRICO</button>}
-</article>; })}</div>}
+    {!hasOrders ? <section className="mt-7 rounded-3xl border border-white/10 bg-white/[.025] p-8 text-center"><ShoppingBag size={35} className="mx-auto text-[#7affb9]" /><h2 className="mt-4 text-xl font-bold">Você ainda não tem pedidos</h2><p className="mt-2 text-sm text-white/55">Quando você finalizar uma compra, ela aparecerá aqui.</p><Link href="/" className="button-primary mt-6 inline-flex">CONTINUAR COMPRANDO</Link></section> : <div className="mt-7 space-y-5">{orders.map((order) => { const status = statusFor(order); const StatusIcon = status.icon; const expanded = expandedOrderId === order.id; const cancelled = order.payment_status === "cancelled" || order.order_status === "cancelled"; return <article key={order.id} className="rounded-3xl border border-white/10 bg-white/[.025] p-5 sm:p-6"><button type="button" aria-expanded={expanded} onClick={() => setExpandedOrderId(expanded ? null : order.id)} className="w-full text-left"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold tracking-[.16em] text-white/45">PEDIDO</p><h2 className="mt-1 text-lg font-black text-white">{order.order_number}</h2><p className="mt-1 text-xs text-white/45">{new Date(order.created_at).toLocaleString("pt-BR")} · {deliveryLabel(order)}</p></div><p className={`inline-flex items-center gap-2 text-xs font-black tracking-wide ${status.className}`}><StatusIcon size={16} />{status.label}</p></div><div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#82ffc5]">{expanded ? "OCULTAR DETALHES" : "VER DETALHES DO PEDIDO"}<ChevronDown size={15} className={expanded ? "rotate-180 transition" : "transition"} /></div></button><div className="mt-5 divide-y divide-white/10 rounded-2xl border border-white/10 bg-black/15">{order.order_items.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-semibold">{item.product_name}</p><p className="mt-1 text-xs text-white/45">Tamanho {item.size} · Quantidade {item.quantity}</p></div><strong className="shrink-0">{toMoney(item.unit_price_cents * item.quantity / 100)}</strong></div>)}</div><div className="mt-5 flex flex-wrap items-end justify-between gap-4"><div className="text-xs leading-5 text-white/50"><p>Pagamento: <strong className="text-white/75">{paymentLabel(order.payment_method)}</strong></p>{order.tracking_code && <p>Código de rastreio: <strong className="text-white/75">{order.tracking_code}</strong></p>}</div><div className="text-right"><p className="text-xs text-white/45">Total</p><p className="text-xl font-black text-[#82ffc5]">{toMoney(order.total_cents / 100)}</p></div></div>{expanded && <section className="mt-5 space-y-4 rounded-2xl border border-[#82ffc5]/20 bg-[#82ffc5]/[.04] p-4" aria-label={`Detalhes do pedido ${order.order_number}`}><div className="grid gap-3 text-sm sm:grid-cols-2"><p><span className="block text-xs text-white/45">Recebimento</span><strong>{formatOrderAddress(order)}</strong></p><p><span className="block text-xs text-white/45">Data do pedido</span><strong>{new Date(order.created_at).toLocaleString("pt-BR")}</strong></p><p><span className="block text-xs text-white/45">Cliente</span><strong>{order.customer_name}</strong></p>{order.customer_phone && <p><span className="block text-xs text-white/45">Telefone</span><strong>{order.customer_phone}</strong></p>}</div>{order.payment_method === "pix" && !cancelled && <div className="rounded-xl border border-[#7affb9]/30 bg-[#7affb9]/[.06] p-3"><p className="text-xs font-black tracking-wide text-[#82ffc5]">CHAVE PIX DA LOJA</p><p className="mt-2 break-all rounded-lg border border-white/10 bg-black/20 px-3 py-2 font-mono text-sm">{settings.pix_key}</p><button type="button" onClick={() => void copyPixKey()} className="button-primary mt-3 w-full text-xs"><Clipboard size={15} />COPIAR CHAVE PIX</button></div>}<button type="button" onClick={() => void copyOrder(order)} className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-xs font-bold text-white/75 transition hover:bg-white/10"><Clipboard size={15} />COPIAR MENSAGEM DO PEDIDO</button></section>}{canCancel(order) ? <button type="button" onClick={() => void cancelOrder(order)} disabled={cancellingId !== null || deletingId !== null} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-red-300/35 px-4 py-2.5 text-xs font-bold text-red-100 transition hover:bg-red-300/10 disabled:opacity-60">{cancellingId === order.id && <Loader2 size={15} className="animate-spin" />}CANCELAR PEDIDO</button> : cancelled && <button type="button" onClick={() => void deleteCancelledOrder(order)} disabled={deletingId !== null} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-xs font-bold text-white/70 transition hover:bg-white/10 disabled:opacity-60">{deletingId === order.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}APAGAR DO MEU HISTÓRICO</button>}</article>; })}</div>}
   </main>;
 }
