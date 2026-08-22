@@ -27,6 +27,7 @@ export type SupabaseOrder = {
   order_number: string;
   customer_user_id?: string | null;
   customer_name: string;
+  payment_method?: "pix" | "credit" | "boleto" | "cash" | "mercado_pago" | string | null;
   payment_status: "pending" | "approved" | "rejected" | "cancelled";
   total_cents: number;
   created_at: string;

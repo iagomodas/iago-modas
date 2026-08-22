@@ -140,11 +140,25 @@ const operationalLabels: Record<OperationalStatus, string> = {
   awaiting_freight: "Frete a combinar pelo atendimento",
   freight_informed: "Frete informado",
   awaiting_pix: "Aguardando Pix",
-  paid: "Pix confirmado",
+  paid: "Pagamento confirmado",
   ready_to_post: "Pronto para postar",
   shipped: "Postado",
   cancelled: "Cancelado",
 };
+
+function paymentMethodLabel(paymentMethod?: string | null) {
+  if (paymentMethod === "cash") return "Dinheiro";
+  if (paymentMethod === "credit") return "Maquininha";
+  if (paymentMethod === "pix") return "Pix";
+  return "Forma não informada";
+}
+
+function paymentConfirmedLabel(paymentMethod?: string | null) {
+  if (paymentMethod === "cash") return "Dinheiro pago";
+  if (paymentMethod === "credit") return "Maquininha paga";
+  if (paymentMethod === "pix") return "Pix confirmado";
+  return "Pagamento confirmado";
+}
 
 const isCancelledOrder = (order: SupabaseOrder) =>
   order.payment_status === "cancelled" || order.order_status === "cancelled";
@@ -448,7 +462,9 @@ function AdminConsole() {
     if (!supabase) return;
     const update = status === "cancelled"
       ? { order_status: status, payment_status: "cancelled" }
-      : { order_status: status };
+      : status === "paid"
+        ? { order_status: status, payment_status: "approved" }
+        : { order_status: status };
     const { error } = await supabase
       .from("orders")
       .update(update)
@@ -808,6 +824,7 @@ function AdminConsole() {
                       ? `${order.address ?? ""}, ${order.delivery_number ?? ""} · ${order.delivery_city ?? ""}/${order.delivery_state ?? ""}`
                       : `${order.delivery_mode === "city_delivery" ? "Entrega" : "Retirada"} em ${storefront.settings.local_city} — combinar pelo atendimento`}
                   </p>
+                  <p className="mt-1 text-xs font-semibold text-[#82ffc5]">Forma de pagamento: {paymentMethodLabel(order.payment_method)}</p>
                 </div>
                 {order.delivery_mode === "correios" && <Button
                   type="button"
@@ -838,8 +855,9 @@ function AdminConsole() {
                     }
                     className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs font-normal text-white outline-none"
                   >
-                    <option value="pending">{orderLabels.pending}</option>
-                    <option value="approved">{orderLabels.approved}</option>
+                    <option value="pending">                    {orderLabels.pending}</option>
+                    <option value="approved">{paymentConfirmedLabel(order.payment_method)}</option>
+
                     <option value="rejected">{orderLabels.rejected}</option>
                     <option value="cancelled">{orderLabels.cancelled}</option>
                   </select>
@@ -864,7 +882,7 @@ function AdminConsole() {
                   >
                     {operationalStatuses.map(status => (
                       <option key={status} value={status}>
-                        {operationalLabels[status]}
+                        {status === "paid" ? paymentConfirmedLabel(order.payment_method) : operationalLabels[status]}
                       </option>
                     ))}
                   </select>

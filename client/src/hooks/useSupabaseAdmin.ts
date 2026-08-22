@@ -55,7 +55,7 @@ export function useSupabaseOrders() {
       setLoading(true);
       const { data, error: requestError } = await client
         .from("orders")
-        .select("id, order_number, customer_user_id, customer_name, payment_status, total_cents, created_at, delivery_mode, delivery_city, delivery_state, delivery_neighborhood, delivery_number, delivery_complement, customer_phone, postal_code, address, order_status, tracking_code")
+        .select("id, order_number, customer_user_id, customer_name, payment_method, payment_status, total_cents, created_at, delivery_mode, delivery_city, delivery_state, delivery_neighborhood, delivery_number, delivery_complement, customer_phone, postal_code, address, order_status, tracking_code")
         .order("created_at", { ascending: false });
       if (requestError) {
         setError(requestError.message);
