@@ -1,4 +1,5 @@
 export const OAUTH_RETURN_QUERY = "iago_oauth_return";
+const OAUTH_RETURN_STORAGE_KEY = "iago_oauth_return_pending";
 
 const allowedOAuthRoutes = ["/admin", "/perfil"] as const;
 
@@ -6,6 +7,37 @@ export type OAuthReturnRoute = (typeof allowedOAuthRoutes)[number];
 
 function isOAuthReturnRoute(value: string | null): value is OAuthReturnRoute {
   return Boolean(value && allowedOAuthRoutes.includes(value as OAuthReturnRoute));
+}
+
+function readStoredOAuthReturnRoute(): OAuthReturnRoute | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const target = window.sessionStorage.getItem(OAUTH_RETURN_STORAGE_KEY);
+    return isOAuthReturnRoute(target) ? target : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistOAuthReturnRoute(target: OAuthReturnRoute) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.sessionStorage.setItem(OAUTH_RETURN_STORAGE_KEY, target);
+  } catch {
+    // O retorno também segue pela query string quando o armazenamento local não está disponível.
+  }
+}
+
+function clearStoredOAuthReturnRoute() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.sessionStorage.removeItem(OAUTH_RETURN_STORAGE_KEY);
+  } catch {
+    // Não há ação adicional necessária quando o navegador bloqueia o armazenamento local.
+  }
 }
 
 /**
@@ -21,12 +53,13 @@ export function buildOAuthReturnUrl(currentHref: string, target: OAuthReturnRout
 }
 
 export function getOAuthReturnUrl(target: OAuthReturnRoute) {
+  persistOAuthReturnRoute(target);
   return buildOAuthReturnUrl(window.location.href, target);
 }
 
 export function getPendingOAuthReturnRoute(currentHref = window.location.href): OAuthReturnRoute | null {
   const target = new URL(currentHref).searchParams.get(OAUTH_RETURN_QUERY);
-  return isOAuthReturnRoute(target) ? target : null;
+  return isOAuthReturnRoute(target) ? target : readStoredOAuthReturnRoute();
 }
 
 /**
@@ -49,6 +82,7 @@ export function consumeOAuthReturnRoute() {
   const url = new URL(window.location.href);
   url.searchParams.delete(OAUTH_RETURN_QUERY);
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  clearStoredOAuthReturnRoute();
   return target;
 }
 
