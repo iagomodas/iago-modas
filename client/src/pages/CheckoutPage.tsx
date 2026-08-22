@@ -45,13 +45,12 @@ export default function CheckoutPage() {
   const [name, setName] = useState("");
   const [profileState, setProfileState] = useState<"checking" | "missing" | "ready">("checking");
   const [deliveryKind, setDeliveryKind] = useState<"local_pickup" | "city_delivery" | "outside">("local_pickup");
-  const [paymentMethod, setPaymentMethod] = useState<"pix" | "cash" | "mercado_pago" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "cash" | "credit" | "mercado_pago" | null>(null);
   const [address, setAddress] = useState({ cep: "", street: "", number: "", complement: "", district: "", city: "", state: "" });
   const [profilePhone, setProfilePhone] = useState("");
+  const [installments, setInstallments] = useState(1);
   const [submitting, setSubmitting] = useState(false);
-  const [contactRetryHref, setContactRetryHref] = useState<string | null>(null);
-  const [showInstagramCopyGuide, setShowInstagramCopyGuide] = useState(false);
-  const [registeredOrder, setRegisteredOrder] = useState<{ number?: string; channel: ContactChannel; paymentMethod: "pix" | "cash"; summary: string } | null>(null);
+  const [registeredOrder, setRegisteredOrder] = useState<{ number?: string; channel: "instagram"; paymentMethod: "pix" | "cash" | "credit"; summary: string } | null>(null);
   const submitLockRef = useRef(false);
   const localAreaLabel = `${settings.local_city} — ${settings.local_state}`;
   const localPickupOption = `${settings.local_pickup_label} ${localAreaLabel}`;
@@ -70,7 +69,7 @@ export default function CheckoutPage() {
   }, [deliveryKind, settings.local_delivery_enabled, settings.local_pickup_enabled]);
 
   useEffect(() => {
-    if (deliveryKind === "outside" && paymentMethod === "cash") setPaymentMethod(null);
+    if (deliveryKind === "outside" && (paymentMethod === "cash" || paymentMethod === "credit")) setPaymentMethod(null);
   }, [deliveryKind, paymentMethod]);
 
   useEffect(() => {
@@ -110,22 +109,24 @@ export default function CheckoutPage() {
     });
     const payment = paymentMethod === "pix"
       ? formatPixPayment(settings.pix_key, supportChannelLabel)
-      : paymentMethod === "cash"
+        : paymentMethod === "cash"
         ? "Pagamento: Dinheiro em espécie na retirada ou entrega local."
-        : paymentMethod === "mercado_pago"
+        : paymentMethod === "credit"
+          ? `Pagamento: Maquininha — ${installments}x de ${toMoney(subtotal / installments)}. Confirmar as parcelas com a loja no atendimento.`
+          : paymentMethod === "mercado_pago"
           ? "Pagamento: checkout protegido do Mercado Pago. A confirmação é automática somente após a notificação oficial do provedor."
           : "Pagamento: forma de pagamento ainda não selecionada.";
     return `${formatInstagramOrder(cart, subtotal, orderDeliveryKind)}\n\nCliente: ${name || "(nome a confirmar)"}\n${delivery}\n${payment}`;
-  }, [address, cart, deliveryKind, localDeliveryOption, localPickupOption, name, paymentMethod, settings.outside_delivery_notice, settings.pix_key, subtotal, supportChannelLabel]);
+  }, [address, cart, deliveryKind, installments, localDeliveryOption, localPickupOption, name, paymentMethod, settings.outside_delivery_notice, settings.pix_key, subtotal, supportChannelLabel]);
 
   function openConfiguredContact(channel: ContactChannel, orderSummary = summary) {
     if (channel === "whatsapp" && settings.whatsapp_enabled && settings.whatsapp_number) {
-      setContactRetryHref(getWhatsAppChatUrl(settings.whatsapp_number, orderSummary));
+      getWhatsAppChatUrl(settings.whatsapp_number, orderSummary);
       openWhatsAppChat(settings.whatsapp_number, orderSummary);
       return;
     }
     if (settings.instagram_enabled) {
-      setContactRetryHref(getInstagramOpenUrl(settings.instagram_handle));
+      getInstagramOpenUrl(settings.instagram_handle);
       openInstagramApp(settings.instagram_handle);
     }
   }
@@ -149,8 +150,7 @@ export default function CheckoutPage() {
   }
 
   async function submit(contactChannel: ContactChannel | null) {
-    const contactName = contactChannel === "whatsapp" ? "WhatsApp" : "Instagram";
-    setShowInstagramCopyGuide(false);
+    const contactName = contactChannel === "whatsapp" ? "WhatsApp" : contactChannel === "instagram" ? "Instagram" : "atendimento";
     if (submitting || submitLockRef.current || registeredOrder) {
       setMessage("Este pedido já foi registrado. Use os botões abaixo para copiar a mensagem ou abrir o atendimento, sem criar outro pedido.");
       return;
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
       return;
     }
     const selectedPaymentMethod = paymentMethod;
-    if (deliveryKind === "outside" && paymentMethod === "cash") {
+    if (deliveryKind === "outside" && (paymentMethod === "cash" || paymentMethod === "credit")) {
       setMessage(`Para pedidos de outra cidade, escolha Pix após combinar o frete pelo ${supportChannelLabel}.`);
       return;
     }
@@ -195,10 +195,6 @@ export default function CheckoutPage() {
         // O resumo continua visível abaixo quando a cópia não for permitida.
       }
       setMessage(`Um item do seu carrinho ainda não está publicado pela loja. ${copied ? `O resumo foi copiado; confirme a disponibilidade pelo ${contactName}.` : `Confirme a disponibilidade pelo ${contactName} usando o resumo abaixo.`}`);
-      if (contactChannel) {
-        if (contactChannel === "instagram") setShowInstagramCopyGuide(true);
-        openConfiguredContact(contactChannel);
-      }
       return;
     }
     if (!supabase) {
@@ -209,7 +205,6 @@ export default function CheckoutPage() {
     submitLockRef.current = true;
     try {
       setSubmitting(true);
-      setContactRetryHref(null);
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user?.email) throw new Error("Entre com Google para registrar o pedido.");
       const { data, error } = await supabase.rpc("create_manual_delivery_order" as never, {
@@ -231,12 +226,8 @@ export default function CheckoutPage() {
       const registeredSummary = summary;
       await copyText(registeredSummary);
       const number = Array.isArray(data) ? (data[0] as { order_number?: string })?.order_number : undefined;
-      if (contactChannel) setRegisteredOrder({ number, channel: contactChannel, paymentMethod: selectedPaymentMethod, summary: registeredSummary });
-      setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo foi copiado; no ${contactName}, cole e envie.`);
-      if (contactChannel) {
-        if (contactChannel === "instagram") setShowInstagramCopyGuide(true);
-        openConfiguredContact(contactChannel, registeredSummary);
-      }
+      setRegisteredOrder({ number, channel: "instagram", paymentMethod: selectedPaymentMethod as "pix" | "cash" | "credit", summary: registeredSummary });
+      setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo foi copiado; toque em abrir o Instagram quando estiver pronto.`);
       clearCart();
     } catch (error) {
       submitLockRef.current = false;
@@ -251,10 +242,6 @@ export default function CheckoutPage() {
         ? ` O resumo foi copiado; envie-o para a loja pelo ${contactName}.`
         : ` Use o resumo exibido abaixo ao falar com a loja pelo ${contactName}.`;
       setMessage(`${orderErrorMessage(error)}${recovery}`);
-      if (contactChannel) {
-        if (contactChannel === "instagram") setShowInstagramCopyGuide(true);
-        openConfiguredContact(contactChannel);
-      }
     } finally {
       setSubmitting(false);
     }
@@ -318,7 +305,7 @@ export default function CheckoutPage() {
       </section>}
       {isInstagramOrder && <section aria-label="Como enviar o pedido no Instagram" className="mt-6 w-full max-w-lg rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
         <p className="text-sm font-black text-[#7affb9]">PRÓXIMO PASSO: ENVIE A MENSAGEM NO DIRECT</p>
-        <p className="mt-2 text-xs leading-5 text-white/75">A conversa com a IAGO MODAS foi aberta. Copie a mensagem, volte ao Instagram, cole no campo “Mensagem...” e toque em enviar.</p>
+        <p className="mt-2 text-xs leading-5 text-white/75">Copie a mensagem e toque no botão para abrir o Instagram; depois, cole no Direct e toque em enviar.</p>
         <button type="button" onClick={() => void copyOrderMessage()} className="button-primary mt-3 w-full text-xs"><Clipboard size={16} />COPIAR MENSAGEM DO PEDIDO</button>
       </section>}
       <button type="button" onClick={() => openConfiguredContact(registeredOrder.channel, registeredOrder.summary)} className={isInstagramOrder ? "button-instagram mt-3" : "button-whatsapp mt-3"}>{isInstagramOrder ? <FaInstagram size={17} /> : <FaWhatsapp size={17} />}{isInstagramOrder ? "ABRIR CONVERSA NO INSTAGRAM" : "ABRIR CONVERSA NO WHATSAPP"}<ExternalLink size={15} /></button>
@@ -333,8 +320,8 @@ export default function CheckoutPage() {
   return <main className="container py-8 md:py-12">
     <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/55 hover:text-[#7affb9]"><ArrowLeft size={16} />Voltar para a loja</Link>
     <div className="mt-8 grid gap-8 lg:grid-cols-[.92fr_1.08fr] lg:gap-12">
-      <section className="rounded-[1.5rem] border border-white/10 bg-white/[.025] p-5 sm:p-7">
-        <p className="eyebrow">PEDIDO PELO {supportChannelLabel.toUpperCase()}</p>
+      <section className="order-2 rounded-[1.5rem] border border-white/10 bg-white/[.025] p-5 sm:p-7 lg:order-1">
+        <p className="eyebrow">SEU PEDIDO</p>
         <h1 className="mt-2 text-3xl font-black">FINALIZAR PEDIDO</h1>
         <p className="mt-4 text-sm leading-6 text-white/60">A IAGO MODAS envia para todo o Brasil. Primeiro escolha onde vai receber, depois a forma de pagamento e, por fim, envie o pedido pelo atendimento. A loja confirma disponibilidade, frete e pagamento.</p>
         <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
@@ -342,21 +329,15 @@ export default function CheckoutPage() {
           <fieldset><legend className="text-sm font-semibold">Onde você vai receber?</legend><div className="mt-2 grid gap-2 sm:grid-cols-3">{settings.local_pickup_enabled && <label className="rounded-xl border border-white/10 p-3 text-sm"><input type="radio" checked={deliveryKind === "local_pickup"} onChange={() => setDeliveryKind("local_pickup")} className="mr-2 accent-[#7affb9]" />{localPickupOption}</label>}{settings.local_delivery_enabled && <label className="rounded-xl border border-white/10 p-3 text-sm"><input type="radio" checked={deliveryKind === "city_delivery"} onChange={() => setDeliveryKind("city_delivery")} className="mr-2 accent-[#7affb9]" />{localDeliveryOption}</label>}<label className="rounded-xl border border-white/10 p-3 text-sm"><input type="radio" checked={deliveryKind === "outside"} onChange={() => setDeliveryKind("outside")} className="mr-2 accent-[#7affb9]" />{settings.outside_delivery_label}</label></div></fieldset>
           {deliveryKind === "outside" && <div className="grid gap-3 sm:grid-cols-2">{([['cep', 'CEP'], ['street', 'Rua ou avenida'], ['number', 'Número'], ['complement', 'Complemento (opcional)'], ['district', 'Bairro'], ['city', 'Cidade'], ['state', 'UF']] as const).map(([key, label]) => <input key={key} value={address[key]} onChange={(event) => setAddress({ ...address, [key]: key === "state" ? event.target.value.toUpperCase().slice(0, 2) : event.target.value })} placeholder={label} className="field-input" />)}</div>}
           {deliveryKind === "outside" && <p className="text-xs leading-5 text-white/50">{settings.outside_delivery_notice}</p>}
-          <fieldset><legend className="text-sm font-semibold">Como você quer pagar?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2"><label className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "pix"} onChange={() => setPaymentMethod("pix")} className="sr-only" /><Clipboard size={18} /><span><strong>Pix</strong><small>Pagamento pelo celular após combinar o pedido.</small></span></label>{deliveryKind !== "outside" && <label className={`payment-option ${paymentMethod === "cash" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "cash"} onChange={() => setPaymentMethod("cash")} className="sr-only" /><Banknote size={18} /><span><strong>Dinheiro</strong><small>Pagamento em espécie na retirada ou entrega local.</small></span></label>}{automaticPaymentEnabled && <label className={`payment-option ${paymentMethod === "mercado_pago" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "mercado_pago"} onChange={() => setPaymentMethod("mercado_pago")} className="sr-only" /><CreditCard size={18} /><span><strong>Mercado Pago</strong><small>Checkout protegido; confirmação automática após o retorno oficial.</small></span></label>}</div></fieldset>
+          <fieldset><legend className="text-sm font-semibold">Como você quer pagar?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2"><label className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "pix"} onChange={() => setPaymentMethod("pix")} className="sr-only" /><Clipboard size={18} /><span><strong>Pix</strong><small>Pagamento pelo celular após combinar o pedido.</small></span></label>{deliveryKind !== "outside" && <label className={`payment-option ${paymentMethod === "cash" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "cash"} onChange={() => setPaymentMethod("cash")} className="sr-only" /><Banknote size={18} /><span><strong>Dinheiro</strong><small>Pagamento em espécie na retirada ou entrega local.</small></span></label>}{deliveryKind !== "outside" && <label className={`payment-option ${paymentMethod === "credit" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "credit"} onChange={() => setPaymentMethod("credit")} className="sr-only" /><CreditCard size={18} /><span><strong>Maquininha</strong><small>Informe em quantas vezes deseja pagar.</small></span></label>}{automaticPaymentEnabled && <label className={`payment-option ${paymentMethod === "mercado_pago" ? "active" : ""}`}><input type="radio" name="payment-method" checked={paymentMethod === "mercado_pago"} onChange={() => setPaymentMethod("mercado_pago")} className="sr-only" /><CreditCard size={18} /><span><strong>Mercado Pago</strong><small>Checkout protegido; confirmação automática após o retorno oficial.</small></span></label>}</div></fieldset>
+          {paymentMethod === "credit" && <div className="rounded-xl border border-[#7affb9]/25 bg-[#7affb9]/[.06] p-3 text-xs leading-5 text-white/75"><label className="flex items-center justify-between gap-3"><span className="font-bold text-[#82ffc5]">Quantas vezes?</span><select value={installments} onChange={event => setInstallments(Number(event.target.value))} className="rounded-lg border border-[#7affb9]/35 bg-black/30 px-3 py-2 font-bold text-white">{Array.from({ length: 12 }, (_, index) => index + 1).map(value => <option key={value} value={value}>{value}x</option>)}</select></label><p className="mt-2">A opção de maquininha e as parcelas serão enviadas no resumo para a loja confirmar.</p></div>}
           {paymentMethod === "pix" && <div className="rounded-xl border border-[#7affb9]/25 bg-[#7affb9]/[.06] p-3 text-xs leading-5 text-white/75"><p>Chave Pix da loja: <strong className="text-[#82ffc5]">{settings.pix_key}</strong>.</p><p className="mt-1">1. Copie a chave. 2. Faça o pagamento no seu banco. 3. Envie o comprovante pelo atendimento para a confirmação manual.</p><button type="button" onClick={() => void copyPixKey()} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7affb9]/35 px-3 py-2 text-xs font-bold text-[#82ffc5] transition hover:bg-[#7affb9]/10"><Clipboard size={14} />COPIAR CHAVE PIX</button></div>}
           {paymentMethod === "mercado_pago" && <div className="rounded-xl border border-[#7affb9]/25 bg-[#7affb9]/[.06] p-3 text-xs leading-5 text-white/75"><p className="font-bold text-[#82ffc5]">CHECKOUT PROTEGIDO DO MERCADO PAGO</p><p className="mt-1">Você será direcionado para o ambiente oficial do Mercado Pago. A loja só considera o pagamento confirmado após receber a notificação assinada do provedor.</p></div>}
         </div>
-        {paymentMethod === "mercado_pago" ? <button disabled={submitting} onClick={() => void startAutomaticPayment()} className="button-primary mt-8 w-full disabled:opacity-60"><CreditCard size={19} />{submitting ? "ABRINDO CHECKOUT..." : "PAGAR COM MERCADO PAGO"}<ExternalLink size={16} /></button> : <>{settings.instagram_enabled && <button disabled={submitting} onClick={() => void submit("instagram")} className="button-instagram mt-8 w-full disabled:opacity-60"><FaInstagram size={19} />{submitting ? "REGISTRANDO..." : "ENVIAR PEDIDO E ABRIR CONVERSA"}<ExternalLink size={16} /></button>}{settings.whatsapp_enabled && settings.whatsapp_number && <button disabled={submitting} onClick={() => void submit("whatsapp")} className="button-whatsapp mt-3 w-full disabled:opacity-60"><FaWhatsapp size={19} />{submitting ? "REGISTRANDO..." : "ENVIAR PEDIDO E ABRIR WHATSAPP"}<ExternalLink size={16} /></button>}</>}
-        {contactRetryHref && <a href={contactRetryHref} className="button-secondary mt-3 w-full"><ExternalLink size={16} />{contactRetryHref.startsWith("intent://") ? "ABRIR NO APLICATIVO INSTAGRAM" : "TENTAR ABRIR O ATENDIMENTO NOVAMENTE"}</a>}
-        {paymentMethod !== "mercado_pago" && <button disabled={submitting} onClick={() => void submit(null)} className="button-secondary mt-3 w-full"><Clipboard size={16} />REGISTRAR E COPIAR RESUMO</button>}
+        {paymentMethod === "mercado_pago" ? <button disabled={submitting} onClick={() => void startAutomaticPayment()} className="button-primary mt-8 w-full disabled:opacity-60"><CreditCard size={19} />{submitting ? "ABRINDO CHECKOUT..." : "FINALIZAR PEDIDO"}<ExternalLink size={16} /></button> : <button disabled={submitting} onClick={() => void submit(null)} className="button-primary mt-8 w-full disabled:opacity-60"><Check size={19} />{submitting ? "ENVIANDO PEDIDO..." : "FINALIZAR PEDIDO"}</button>}
         {message && <p role="status" className="mt-4 flex gap-2 rounded-xl border border-white/10 bg-white/[.035] p-3 text-xs text-white/65"><Check size={16} className="text-[#7affb9]" />{message}</p>}
-        {showInstagramCopyGuide && <section aria-label="Como enviar o pedido no Instagram" className="mt-4 rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
-          <p className="text-sm font-black text-[#7affb9]">PRÓXIMO PASSO: ENVIE A MENSAGEM NO DIRECT</p>
-          <p className="mt-2 text-xs leading-5 text-white/75">A conversa com a IAGO MODAS foi aberta. A mensagem do pedido foi copiada; volte ao Instagram, cole no campo “Mensagem...” e toque em enviar.</p>
-          <button type="button" onClick={() => void copyOrderMessage()} className="button-primary mt-3 w-full text-xs"><Clipboard size={16} />COPIAR MENSAGEM DO PEDIDO</button>
-        </section>}
       </section>
-      <aside className="h-fit rounded-[1.5rem] border border-white/10 bg-[#11161b] p-5 sm:p-7"><h2 className="text-lg font-bold">Resumo do pedido</h2><div className="mt-5 divide-y divide-white/10">{cart.map((item) => <div key={`${item.id}-${item.size}`} className="flex gap-3 py-4"><img src={item.image} alt="" className="h-16 w-14 rounded-lg object-cover object-right" /><div className="flex-1"><p className="text-sm font-semibold">{item.name}</p><p className="mt-1 text-xs text-white/45">Tam. {item.size} · Qtd. {item.quantity}</p></div><strong className="text-sm">{toMoney(item.price * item.quantity)}</strong></div>)}</div><div className="mt-5 border-t border-white/10 pt-5"><div className="flex justify-between text-sm text-white/55"><span>Subtotal dos produtos</span><span>{toMoney(subtotal)}</span></div><div className="mt-3 flex justify-between text-sm text-white/55"><span>Frete</span><span>{deliveryKind === "outside" ? "A combinar" : "Não se aplica"}</span></div><div className="mt-5 flex justify-between text-lg font-bold"><span>Total inicial</span><span>{toMoney(subtotal)}</span></div></div>{deliveryKind === "outside" && <div className="mt-6 flex gap-2 rounded-xl bg-white/[.035] p-3 text-xs leading-5 text-white/50"><Info size={15} className="text-[#7affb9]" />{settings.outside_delivery_notice}</div>}<pre className="mt-5 max-h-52 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 p-4 font-sans text-xs leading-5 text-white/60">{summary}</pre></aside>
+      <aside className="order-1 h-fit rounded-[1.5rem] border border-white/10 bg-[#11161b] p-5 sm:p-7 lg:order-2"><h2 className="text-lg font-bold">Resumo do pedido</h2><div className="mt-5 divide-y divide-white/10">{cart.map((item) => <div key={`${item.id}-${item.size}`} className="flex gap-3 py-4"><img src={item.image} alt="" className="h-16 w-14 rounded-lg object-cover object-right" /><div className="flex-1"><p className="text-sm font-semibold">{item.name}</p><p className="mt-1 text-xs text-white/45">Tam. {item.size} · Qtd. {item.quantity}</p></div><strong className="text-sm">{toMoney(item.price * item.quantity)}</strong></div>)}</div><div className="mt-5 border-t border-white/10 pt-5"><div className="flex justify-between text-sm text-white/55"><span>Subtotal dos produtos</span><span>{toMoney(subtotal)}</span></div><div className="mt-3 flex justify-between text-sm text-white/55"><span>Frete</span><span>{deliveryKind === "outside" ? "A combinar" : "Não se aplica"}</span></div><div className="mt-5 flex justify-between text-lg font-bold"><span>Total inicial</span><span>{toMoney(subtotal)}</span></div></div>{deliveryKind === "outside" && <div className="mt-6 flex gap-2 rounded-xl bg-white/[.035] p-3 text-xs leading-5 text-white/50"><Info size={15} className="text-[#7affb9]" />{settings.outside_delivery_notice}</div>}<pre className="mt-5 max-h-52 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 p-4 font-sans text-xs leading-5 text-white/60">{summary}</pre></aside>
     </div>
   </main>;
 }

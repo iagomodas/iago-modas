@@ -147,6 +147,6 @@ export function formatInstagramOrder(cart: CartItem[], subtotal: number, deliver
     `Subtotal dos produtos: ${toMoney(subtotal)}`,
     isOutsideDelivery ? "Frete: a combinar" : "Frete: não se aplica para retirada ou entrega local",
     "",
-    isOutsideDelivery ? "Aguardo a confirmação de disponibilidade, frete e Pix. Obrigado!" : "Aguardo a confirmação de disponibilidade e Pix. Obrigado!",
+    isOutsideDelivery ? "Aguardo a confirmação de disponibilidade e do frete. Obrigado!" : "Aguardo a confirmação de disponibilidade. Obrigado!",
   ].join("\n");
 }

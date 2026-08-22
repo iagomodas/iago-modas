@@ -3,7 +3,7 @@ import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { storefrontSettings, catalogProducts } = vi.hoisted(() => ({
+const { storefrontSettings, catalogProducts, clearCart } = vi.hoisted(() => ({
   storefrontSettings: {
     local_city: "Maceió",
     local_state: "AL",
@@ -20,6 +20,7 @@ const { storefrontSettings, catalogProducts } = vi.hoisted(() => ({
     whatsapp_number: "",
   },
   catalogProducts: [{ id: 1 }],
+  clearCart: vi.fn(),
 }));
 
 const { getUser, maybeSingle, rpc, clipboardWrite, openInstagramApp, openWhatsAppChat, supabaseClient } = vi.hoisted(() => {
@@ -52,6 +53,7 @@ vi.mock("@/contexts/StoreContext", () => ({
   useStore: () => ({
     cart: [{ id: 1, name: "Camiseta teste", size: "M", quantity: 1, price: 89.9, image: "https://images.example.com/camiseta.jpg" }],
     subtotal: 89.9,
+    clearCart,
   }),
 }));
 vi.mock("@/hooks/useCatalog", () => ({ useCatalog: () => ({ products: catalogProducts, isLoading: false }) }));
@@ -59,6 +61,8 @@ vi.mock("@/hooks/useStorefrontSettings", () => ({ useStorefrontSettings: () => (
 vi.mock("@/lib/catalog", () => ({ toMoney: (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}` }));
 vi.mock("@/lib/instagramOrder", () => ({
   formatInstagramOrder: () => "Pedido de teste",
+  formatOrderDeliveryDetails: () => "Entrega de teste",
+  formatPixPayment: () => "Pix de teste",
   getInstagramOpenUrl: () => "intent://instagram-test",
   getWhatsAppChatUrl: () => "https://wa.me/5582999999999",
   openInstagramApp,
@@ -80,6 +84,7 @@ describe("checkout com configurações da vitrine", () => {
     rpc.mockResolvedValue({ data: [{ order_number: "IM-0001" }], error: null });
     clipboardWrite.mockResolvedValue(undefined);
     catalogProducts.splice(0, catalogProducts.length, { id: 1 });
+    clearCart.mockReset();
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: clipboardWrite } });
     window.location.hash = "";
   });
@@ -95,20 +100,22 @@ describe("checkout com configurações da vitrine", () => {
     expect(screen.getByText("Buscar na loja em Maceió — AL")).toBeTruthy();
     expect(screen.getByText("Motoboy disponível em Maceió — AL")).toBeTruthy();
     expect(screen.getByText("Moro fora da cidade")).toBeTruthy();
-    expect(screen.getAllByText("O frete é confirmado no Direct antes da postagem.")).toHaveLength(2);
+    expect(screen.queryByText("O frete é confirmado no Direct antes da postagem.")).toBeNull();
     expect(screen.queryByText("pix-atualizado@exemplo.com")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Moro fora da cidade"));
+    expect(screen.getAllByText("O frete é confirmado no Direct antes da postagem.")).toHaveLength(2);
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
     expect(screen.getByText("pix-atualizado@exemplo.com")).toBeTruthy();
   });
 
-  it("bloqueia o pedido de cliente autenticado sem nome completo salvo e direciona ao perfil", async () => {
+  it("bloqueia a finalização de cliente autenticado sem nome completo salvo e direciona ao perfil", async () => {
     getUser.mockResolvedValue({ data: { user: { id: "cliente-sem-perfil", email: "cliente@exemplo.com" } } });
     maybeSingle.mockResolvedValue({ data: null });
     render(<CheckoutPage />);
 
     await waitFor(() => expect(screen.getByText(/complete seu cadastro com google/i)).toBeTruthy());
     vi.useFakeTimers();
-    fireEvent.click(screen.getByRole("button", { name: /enviar pedido e abrir instagram/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     expect(screen.getByRole("status").textContent).toContain("Entre com Google e informe seu nome completo antes de enviar o pedido.");
     act(() => { vi.advanceTimersByTime(850); });
@@ -123,7 +130,7 @@ describe("checkout com configurações da vitrine", () => {
 
     await waitFor(() => expect(screen.getByText("Maria da Silva")).toBeTruthy());
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
-    fireEvent.click(screen.getByRole("button", { name: /registrar e copiar resumo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
       p_customer_name: "Maria da Silva",
@@ -133,6 +140,9 @@ describe("checkout com configurações da vitrine", () => {
       p_items: [{ productId: 1, size: "M", quantity: 1 }],
     })));
     expect(screen.getByRole("status").textContent).toContain("Pedido IM-0001 registrado");
+    expect(screen.getByRole("heading", { name: /pedido IM-0001 enviado para a loja/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /abrir conversa no instagram/i })).toBeTruthy();
+    expect(openInstagramApp).not.toHaveBeenCalled();
     expect(window.location.hash).toBe("");
   });
 
@@ -144,7 +154,7 @@ describe("checkout com configurações da vitrine", () => {
     await waitFor(() => expect(screen.getByText("Maria da Silva")).toBeTruthy());
     fireEvent.click(screen.getByRole("radio", { name: /dinheiro/i }));
     expect(screen.queryByText("pix-atualizado@exemplo.com")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /registrar e copiar resumo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
       p_delivery_mode: "local",
@@ -176,7 +186,7 @@ describe("checkout com configurações da vitrine", () => {
     expect((screen.getByPlaceholderText("Número") as HTMLInputElement).value).toBe("30");
 
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
-    fireEvent.click(screen.getByRole("button", { name: /registrar e copiar resumo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
     await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
       p_customer_phone: "82999990000",
       p_postal_code: "57000000",
@@ -188,7 +198,7 @@ describe("checkout com configurações da vitrine", () => {
     })));
   });
 
-  it("mantém o envio pelo Instagram disponível e copia o resumo quando o produto não pode ser registrado", async () => {
+  it("não abre o Instagram antes de registrar o pedido quando há produto indisponível", async () => {
     getUser.mockResolvedValue({ data: { user: { id: "cliente-sem-catalogo", email: "cliente@exemplo.com" } } });
     maybeSingle.mockResolvedValue({ data: { display_name: "Maria da Silva" } });
     rpc.mockResolvedValue({ data: null, error: { message: "Um dos produtos selecionados não está disponível" } });
@@ -196,12 +206,12 @@ describe("checkout com configurações da vitrine", () => {
 
     await waitFor(() => expect(screen.getByText("Maria da Silva")).toBeTruthy());
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
-    fireEvent.click(screen.getByRole("button", { name: /enviar pedido e abrir instagram/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     await waitFor(() => expect(screen.getByRole("status").textContent).toContain("ainda não está cadastrado"));
     expect(clipboardWrite).toHaveBeenLastCalledWith(expect.stringContaining("Pedido de teste"));
-    expect(openInstagramApp).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("link", { name: /tentar abrir o atendimento novamente/i }).getAttribute("href")).toBe("intent://instagram-test");
+    expect(openInstagramApp).not.toHaveBeenCalled();
+    expect(screen.queryByRole("link", { name: /tentar abrir o atendimento novamente/i })).toBeNull();
   });
 
   it("não chama o RPC quando o carrinho guardado contém produto que não existe no catálogo Supabase", async () => {
@@ -212,11 +222,28 @@ describe("checkout com configurações da vitrine", () => {
 
     await waitFor(() => expect(screen.getByText("Maria da Silva")).toBeTruthy());
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
-    fireEvent.click(screen.getByRole("button", { name: /enviar pedido e abrir instagram/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     await waitFor(() => expect(screen.getByRole("status").textContent).toContain("ainda não está publicado"));
     expect(rpc).not.toHaveBeenCalled();
     expect(clipboardWrite).toHaveBeenCalled();
-    expect(openInstagramApp).toHaveBeenCalledTimes(1);
+    expect(openInstagramApp).not.toHaveBeenCalled();
+  });
+
+  it("inclui a forma maquininha e as parcelas no resumo copiado", async () => {
+    getUser.mockResolvedValue({ data: { user: { id: "cliente-maquininha", email: "cliente@exemplo.com" } } });
+    maybeSingle.mockResolvedValue({ data: { display_name: "Maria da Silva" } });
+    render(<CheckoutPage />);
+
+    await waitFor(() => expect(screen.getByText("Maria da Silva")).toBeTruthy());
+    fireEvent.click(screen.getByRole("radio", { name: /maquininha/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: /quantas vezes/i }), { target: { value: "3" } });
+    expect(screen.getByText(/A opção de maquininha e as parcelas serão enviadas/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
+
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
+      p_payment_method: "credit",
+    })));
+    expect(clipboardWrite).toHaveBeenCalledWith(expect.stringContaining("Maquininha — 3x"));
   });
 });
