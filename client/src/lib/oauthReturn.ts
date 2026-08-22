@@ -29,6 +29,19 @@ export function getPendingOAuthReturnRoute(currentHref = window.location.href): 
   return isOAuthReturnRoute(target) ? target : null;
 }
 
+/**
+ * Alguns navegadores podem renderizar o aplicativo antes de preservar a query
+ * `iago_oauth_return`. Enquanto o Supabase ainda está consumindo o fragmento
+ * de OAuth, o hash contém tokens e não é uma rota Wouter válida. Esta guarda
+ * evita que esse estado intermediário alcance a tela 404.
+ */
+export function hasOAuthCallbackResponse(currentHref = window.location.href) {
+  const url = new URL(currentHref);
+  const callbackHash = url.hash.replace(/^#/, "");
+  return /(?:^|&)(?:access_token|refresh_token|error|error_description)=/.test(callbackHash)
+    || url.searchParams.has("code");
+}
+
 export function consumeOAuthReturnRoute() {
   const target = getPendingOAuthReturnRoute();
   if (!target) return null;
