@@ -46,6 +46,7 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  Fragment,
   type FormEvent,
   type ReactNode,
   useEffect,
@@ -158,6 +159,11 @@ function paymentConfirmedLabel(paymentMethod?: string | null) {
   if (paymentMethod === "credit") return "Maquininha confirmada";
   if (paymentMethod === "pix") return "Pix pago";
   return "Pagamento confirmado";
+}
+
+function paymentConfirmationOptions(paymentMethod?: string | null) {
+  const current = paymentConfirmedLabel(paymentMethod);
+  return ["Pix pago", "Dinheiro confirmado", "Maquininha confirmada"].filter((label) => label !== current);
 }
 
 const isCancelledOrder = (order: SupabaseOrder) =>
@@ -855,9 +861,11 @@ function AdminConsole() {
                     }
                     className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs font-normal text-white outline-none"
                   >
-                    <option value="pending">                    {orderLabels.pending}</option>
-                    <option value="approved">{paymentConfirmedLabel(order.payment_method)}</option>
-
+                    <option value="pending">{orderLabels.pending}</option>
+                    <optgroup label="CONFIRMAÇÃO POR FORMA DE PAGAMENTO">
+                      <option value="approved">{paymentConfirmedLabel(order.payment_method)}</option>
+                      {paymentConfirmationOptions(order.payment_method).map((label) => <option key={`payment-${order.id}-${label}`} disabled>{label}</option>)}
+                    </optgroup>
                     <option value="rejected">{orderLabels.rejected}</option>
                     <option value="cancelled">{orderLabels.cancelled}</option>
                   </select>
@@ -880,9 +888,14 @@ function AdminConsole() {
                     }
                     className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs font-normal text-white outline-none"
                   >
-                    {operationalStatuses.map(status => (
+                    {operationalStatuses.map((status) => status === "paid" ? (
+                      <Fragment key={`${order.id}-${status}`}>
+                        <option value={status}>{paymentConfirmedLabel(order.payment_method)}</option>
+                        {paymentConfirmationOptions(order.payment_method).map((label) => <option key={`${order.id}-${status}-${label}`} disabled>{label}</option>)}
+                      </Fragment>
+                    ) : (
                       <option key={status} value={status}>
-                        {status === "paid" ? paymentConfirmedLabel(order.payment_method) : operationalLabels[status]}
+                        {operationalLabels[status]}
                       </option>
                     ))}
                   </select>
