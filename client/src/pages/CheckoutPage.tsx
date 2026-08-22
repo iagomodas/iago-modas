@@ -308,7 +308,7 @@ export default function CheckoutPage() {
       <Check size={35} className="text-[#7affb9]" />
       <p className="eyebrow mt-4">PEDIDO REGISTRADO UMA ÚNICA VEZ</p>
       <h1 className="mt-2 text-2xl font-bold">Pedido{registeredOrder.number ? ` ${registeredOrder.number}` : ""} enviado para a loja</h1>
-      <p className="mt-3 max-w-lg text-sm leading-6 text-white/60">A sacola foi limpa para evitar outro pedido igual. Use a mensagem pronta abaixo para conversar com a IAGO MODAS.</p>
+      <p className="mt-3 max-w-lg text-sm leading-6 text-white/60">O pedido foi enviado para a loja.</p>
       {message && <p role="status" className="mt-3 max-w-lg text-sm text-[#7affb9]">{message}</p>}
       {isPixOrder && <section aria-label="Pagamento Pix" className="mt-6 w-full max-w-lg rounded-2xl border border-[#7affb9]/40 bg-[#7affb9]/[.08] p-4 text-left">
         <p className="text-sm font-black text-[#7affb9]">FORMA DE PAGAMENTO: PIX</p>
