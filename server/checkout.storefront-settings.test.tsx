@@ -87,6 +87,7 @@ describe("checkout com configurações da vitrine", () => {
     clearCart.mockReset();
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: clipboardWrite } });
     window.location.hash = "";
+    window.sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -132,7 +133,7 @@ describe("checkout com configurações da vitrine", () => {
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
     fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order_once", expect.objectContaining({
       p_customer_name: "Maria da Silva",
       p_customer_email: "cliente@exemplo.com",
       p_delivery_mode: "local",
@@ -158,7 +159,7 @@ describe("checkout com configurações da vitrine", () => {
     expect(screen.queryByText("pix-atualizado@exemplo.com")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order_once", expect.objectContaining({
       p_delivery_mode: "local",
       p_payment_method: "cash",
     })));
@@ -191,7 +192,7 @@ describe("checkout com configurações da vitrine", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: /pix/i }));
     fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order_once", expect.objectContaining({
       p_customer_phone: "82999990000",
       p_postal_code: "57000000",
       p_address: "Rua das Flores",
@@ -245,7 +246,7 @@ describe("checkout com configurações da vitrine", () => {
     expect(screen.getByText(/A opção de maquininha e as parcelas serão enviadas/i)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order", expect.objectContaining({
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("create_manual_delivery_order_once", expect.objectContaining({
       p_payment_method: "credit",
     })));
     await waitFor(() => expect(screen.queryByRole("region", { name: /chave pix da loja/i })).toBeNull());

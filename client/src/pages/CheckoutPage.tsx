@@ -9,6 +9,43 @@ import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 
+type RegisteredOrder = { number?: string; channel: "instagram"; paymentMethod: "pix" | "cash" | "credit"; summary: string; cartFingerprint: string };
+
+const REGISTERED_ORDER_STORAGE_KEY = "iago-registered-order";
+const CHECKOUT_REQUEST_TOKEN_STORAGE_KEY = "iago-checkout-request-token";
+
+function getCartFingerprint(cart: Array<{ id: number; size: string; quantity: number }>) {
+  return cart.map((item) => `${item.id}:${item.size}:${item.quantity}`).sort().join("|");
+}
+
+function readRegisteredOrder(cartFingerprint: string, hasCart: boolean): RegisteredOrder | null {
+  try {
+    const raw = window.sessionStorage.getItem(REGISTERED_ORDER_STORAGE_KEY);
+    if (!raw) return null;
+    const order = JSON.parse(raw) as RegisteredOrder;
+    if (hasCart) {
+      window.sessionStorage.removeItem(REGISTERED_ORDER_STORAGE_KEY);
+      return null;
+    }
+    return order;
+  } catch {
+    return null;
+  }
+}
+
+function createCheckoutRequestToken(cartFingerprint: string) {
+  try {
+    const raw = window.sessionStorage.getItem(CHECKOUT_REQUEST_TOKEN_STORAGE_KEY);
+    const existing = raw ? JSON.parse(raw) as { cartFingerprint?: string; token?: string } : null;
+    if (existing?.cartFingerprint === cartFingerprint && existing.token) return existing.token;
+    const token = crypto.randomUUID();
+    window.sessionStorage.setItem(CHECKOUT_REQUEST_TOKEN_STORAGE_KEY, JSON.stringify({ cartFingerprint, token }));
+    return token;
+  } catch {
+    return `checkout-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 async function copyText(text: string) {
   if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
   const element = document.createElement("textarea");
@@ -39,6 +76,7 @@ function orderErrorMessage(error: unknown) {
 
 export default function CheckoutPage() {
   const { cart, clearCart, subtotal } = useStore();
+  const cartFingerprint = getCartFingerprint(cart);
   const { products: publishedProducts, isLoading: isCatalogLoading } = useCatalog();
   const { settings } = useStorefrontSettings();
   const [message, setMessage] = useState("");
@@ -50,7 +88,8 @@ export default function CheckoutPage() {
   const [profilePhone, setProfilePhone] = useState("");
   const [installments, setInstallments] = useState(1);
   const [submitting, setSubmitting] = useState(false);
-  const [registeredOrder, setRegisteredOrder] = useState<{ number?: string; channel: "instagram"; paymentMethod: "pix" | "cash" | "credit"; summary: string } | null>(null);
+  const [registeredOrder, setRegisteredOrder] = useState<RegisteredOrder | null>(() => readRegisteredOrder(cartFingerprint, cart.length > 0));
+  const [requestToken] = useState(() => createCheckoutRequestToken(cartFingerprint));
   const submitLockRef = useRef(false);
   const localAreaLabel = `${settings.local_city} — ${settings.local_state}`;
   const localPickupOption = `${settings.local_pickup_label} ${localAreaLabel}`;
@@ -62,6 +101,10 @@ export default function CheckoutPage() {
       ? "Instagram"
       : "atendimento";
   const automaticPaymentEnabled = settings.future_payment_provider === "mercado_pago" && settings.future_payments_enabled && settings.future_webhook_enabled;
+
+  useEffect(() => {
+    if (registeredOrder) window.sessionStorage.setItem(REGISTERED_ORDER_STORAGE_KEY, JSON.stringify(registeredOrder));
+  }, [registeredOrder]);
 
   useEffect(() => {
     if (deliveryKind === "local_pickup" && !settings.local_pickup_enabled) setDeliveryKind(settings.local_delivery_enabled ? "city_delivery" : "outside");
@@ -117,7 +160,7 @@ export default function CheckoutPage() {
           ? "Pagamento: checkout protegido do Mercado Pago. A confirmação é automática somente após a notificação oficial do provedor."
           : "Pagamento: forma de pagamento ainda não selecionada.";
     return `${formatInstagramOrder(cart, subtotal, orderDeliveryKind)}\n\nCliente: ${name || "(nome a confirmar)"}\n${delivery}\n${payment}`;
-  }, [address, cart, deliveryKind, installments, localDeliveryOption, localPickupOption, name, paymentMethod, settings.outside_delivery_notice, settings.pix_key, subtotal, supportChannelLabel]);
+  }, [address, cart, cartFingerprint, deliveryKind, installments, localDeliveryOption, localPickupOption, name, paymentMethod, settings.outside_delivery_notice, settings.pix_key, subtotal, supportChannelLabel]);
 
   function openConfiguredContact(channel: ContactChannel, orderSummary = summary) {
     if (channel === "whatsapp" && settings.whatsapp_enabled && settings.whatsapp_number) {
@@ -207,7 +250,8 @@ export default function CheckoutPage() {
       setSubmitting(true);
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user?.email) throw new Error("Entre com Google para registrar o pedido.");
-      const { data, error } = await supabase.rpc("create_manual_delivery_order" as never, {
+      const { data, error } = await supabase.rpc("create_manual_delivery_order_once" as never, {
+        p_request_token: requestToken,
         p_customer_name: name.trim(),
         p_customer_email: auth.user.email,
         p_customer_phone: profilePhone,
@@ -226,7 +270,8 @@ export default function CheckoutPage() {
       const registeredSummary = summary;
       await copyText(registeredSummary);
       const number = Array.isArray(data) ? (data[0] as { order_number?: string })?.order_number : undefined;
-      setRegisteredOrder({ number, channel: "instagram", paymentMethod: selectedPaymentMethod as "pix" | "cash" | "credit", summary: registeredSummary });
+      setRegisteredOrder({ number, channel: "instagram", paymentMethod: selectedPaymentMethod as "pix" | "cash" | "credit", summary: registeredSummary, cartFingerprint });
+      window.sessionStorage.removeItem(CHECKOUT_REQUEST_TOKEN_STORAGE_KEY);
       setMessage(`Pedido${number ? ` ${number}` : ""} registrado. O resumo foi copiado; toque em abrir o Instagram quando estiver pronto.`);
       clearCart();
     } catch (error) {

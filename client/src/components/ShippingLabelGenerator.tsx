@@ -50,6 +50,10 @@ export function ShippingLabelGenerator() {
       if (!raw) return;
       try {
         const order = JSON.parse(raw) as Record<string, string | null>;
+        if (order.delivery_mode && order.delivery_mode !== "correios") {
+          setNotice("A etiqueta é somente para pedidos de fora da cidade enviados pelos Correios.");
+          return;
+        }
         setLabel((current) => ({
           ...current,
           orderNumber: order.order_number ?? "",
@@ -81,18 +85,32 @@ export function ShippingLabelGenerator() {
 
   function printLabel(event: FormEvent) {
     event.preventDefault();
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    const documentHtml = buildShippingLabelDocument(label);
+    const documentBlob = new Blob([documentHtml], { type: "text/html;charset=utf-8" });
+    const documentUrl = URL.createObjectURL(documentBlob);
+    const safeOrderNumber = label.orderNumber.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "pedido";
+    const downloadLink = document.createElement("a");
+    downloadLink.href = documentUrl;
+    downloadLink.download = `etiqueta-${safeOrderNumber}.html`;
+    downloadLink.rel = "noopener";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+
+    const printWindow = window.open(documentUrl, "_blank");
     if (!printWindow) {
-      setNotice("O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente novamente.");
+      window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
+      setNotice("A etiqueta foi baixada. Abra o arquivo HTML baixado para imprimir; o navegador bloqueou a janela automática.");
       return;
     }
 
-    printWindow.document.open();
-    printWindow.document.write(buildShippingLabelDocument(label));
-    printWindow.document.close();
-    printWindow.focus();
-    window.setTimeout(() => printWindow.print(), 250);
-    setNotice("Etiqueta aberta para impressão. Confira os dados antes de imprimir e colar na embalagem.");
+    printWindow.opener = null;
+    printWindow.addEventListener("load", () => {
+      printWindow.focus();
+      window.setTimeout(() => printWindow.print(), 250);
+    }, { once: true });
+    window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
+    setNotice("Etiqueta baixada e aberta para impressão. Confira os dados antes de imprimir e colar na embalagem.");
   }
 
   return (
@@ -101,7 +119,7 @@ export function ShippingLabelGenerator() {
         <div>
           <div className="flex items-center gap-2 text-[#82ffc5]"><FileText size={19} /><p className="text-xs font-bold tracking-[.18em]">POSTAGEM MANUAL</p></div>
           <h2 className="mt-2 font-display text-2xl">Gerar etiqueta de endereço</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/55">Use a ação do pedido para carregar o endereço já preenchido pelo cliente e imprimir a etiqueta antes da postagem.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/55">Use somente para pedidos de fora da cidade enviados pelos Correios. A etiqueta será baixada e depois aberta para impressão.</p>
         </div>
         <div className="flex max-w-sm gap-2 rounded-xl border border-[#82ffc5]/15 bg-[#82ffc5]/[.05] p-3 text-xs leading-5 text-white/65"><ShieldCheck className="mt-0.5 shrink-0 text-[#82ffc5]" size={16} />Esta ferramenta não gera código de rastreio. O código oficial é entregue pelos Correios após a postagem.</div>
       </div>
@@ -110,7 +128,7 @@ export function ShippingLabelGenerator() {
         <AddressFields title="DADOS DE QUEM VAI RECEBER" address={label.recipient as EditableAddress} onChange={(field, value) => updateAddress("recipient", field, value)} recipient />
         <AddressFields title="DADOS DE QUEM ESTÁ ENVIANDO" address={label.sender as EditableAddress} onChange={(field, value) => updateAddress("sender", field, value)} />
         <div className="flex flex-wrap items-center gap-4">
-          <Button className="bg-[#82ffc5] text-black hover:bg-white"><Printer className="mr-2" size={16} />GERAR E IMPRIMIR ETIQUETA</Button>
+          <Button className="bg-[#82ffc5] text-black hover:bg-white"><Printer className="mr-2" size={16} />BAIXAR E IMPRIMIR ETIQUETA</Button>
           <p className="max-w-2xl text-xs leading-5 text-white/45">Depois de postar, guarde o comprovante e envie o código de rastreio ao cliente pelo canal de atendimento da loja.</p>
         </div>
         {notice && <p role="status" className="rounded-xl border border-[#82ffc5]/20 bg-[#82ffc5]/[.06] px-4 py-3 text-sm text-white/80">{notice}</p>}

@@ -1,7 +1,7 @@
 export const OAUTH_RETURN_QUERY = "iago_oauth_return";
 const OAUTH_RETURN_STORAGE_KEY = "iago_oauth_return_pending";
 
-const allowedOAuthRoutes = ["/admin", "/perfil"] as const;
+const allowedOAuthRoutes = ["/admin", "/perfil", "/pedidos"] as const;
 
 export type OAuthReturnRoute = (typeof allowedOAuthRoutes)[number];
 

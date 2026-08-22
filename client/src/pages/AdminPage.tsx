@@ -809,7 +809,7 @@ function AdminConsole() {
                       : `${order.delivery_mode === "city_delivery" ? "Entrega" : "Retirada"} em ${storefront.settings.local_city} — combinar pelo atendimento`}
                   </p>
                 </div>
-                <Button
+                {order.delivery_mode === "correios" && <Button
                   type="button"
                   variant="outline"
                   className="border-white/20 text-xs text-white hover:bg-white/10"
@@ -824,8 +824,8 @@ function AdminConsole() {
                       ?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  ETIQUETA
-                </Button>
+                  ETIQUETA CORREIOS
+                </Button>}
                 <label className="grid gap-1 text-[10px] font-bold tracking-wide text-white/45">
                   PAGAMENTO
                   <select

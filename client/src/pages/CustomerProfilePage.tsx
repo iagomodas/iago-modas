@@ -131,7 +131,7 @@ export default function CustomerProfilePage() {
   if (loading) return <main className="container py-16 text-white/60">Carregando seu cadastro…</main>;
   return (
     <main className="container max-w-2xl py-10 md:py-16">
-      <Link href="/" className="text-sm text-white/55 hover:text-[#7affb9]">← Voltar para a loja</Link>
+      <div className="flex flex-wrap items-center justify-between gap-3"><Link href="/" className="text-sm text-white/55 hover:text-[#7affb9]">← Voltar para a loja</Link><Link href="/pedidos" className="text-sm font-bold text-[#7affb9]">MEUS PEDIDOS</Link></div>
       <section className="mt-6 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
         <p className="eyebrow">MINHA CONTA</p><h1 className="mt-2 text-3xl font-black">SEU CADASTRO</h1>
         <p className="mt-3 text-sm leading-6 text-white/60">O Google serve apenas para entrar com segurança. Seu nome, foto e dados de entrega ficam vinculados somente à sua conta e você pode atualizá-los quando quiser.</p>

@@ -18,6 +18,7 @@ import Home from "./pages/Home";
 import ProductPage from "./pages/ProductPage";
 import SearchPage from "./pages/SearchPage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
+import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -133,6 +134,7 @@ function StoreRoutes() {
               <Route path={"/sacola"} component={CheckoutPage} />
               <Route path={"/finalizar-pedido"} component={CheckoutPage} />
               <Route path={"/perfil"} component={CustomerProfilePage} />
+              <Route path={"/pedidos"} component={CustomerOrdersPage} />
               <Route path={"/404"} component={NotFound} />
               <Route component={NotFound} />
             </Switch>
