@@ -154,9 +154,9 @@ function paymentMethodLabel(paymentMethod?: string | null) {
 }
 
 function paymentConfirmedLabel(paymentMethod?: string | null) {
-  if (paymentMethod === "cash") return "Dinheiro pago";
-  if (paymentMethod === "credit") return "Maquininha paga";
-  if (paymentMethod === "pix") return "Pix confirmado";
+  if (paymentMethod === "cash") return "Dinheiro confirmado";
+  if (paymentMethod === "credit") return "Maquininha confirmada";
+  if (paymentMethod === "pix") return "Pix pago";
   return "Pagamento confirmado";
 }
 
