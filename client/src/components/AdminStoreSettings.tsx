@@ -66,8 +66,8 @@ export function AdminStoreSettings({ draft, onFieldChange, onSave, saving, error
           <Accordion type="single" collapsible defaultValue="home" className="rounded-2xl border border-white/10 bg-black/20 px-5">
             <SettingsGroup value="home" title="Página inicial" description="Logo, aviso, imagem, cores e seções principais.">
               <div className="grid gap-4 md:grid-cols-2">
-                <StorefrontImagePicker label="Logo da loja" description="Escolha a logo na galeria. Não precisa copiar endereço de imagem." value={draft.logo_url ?? ""} onChange={(value) => onFieldChange("logo_url", value)} disabled={saving} />
-                <StorefrontImagePicker label="Imagem principal" description="Escolha a foto de destaque da página inicial pela galeria." value={draft.hero_image_url ?? ""} onChange={(value) => onFieldChange("hero_image_url", value)} disabled={saving} />
+                <StorefrontImagePicker label="Logo da loja" description="Escolha e enquadre a logo na galeria. Não precisa copiar endereço de imagem." value={draft.logo_url ?? ""} onChange={(value) => onFieldChange("logo_url", value)} aspectRatio={1} disabled={saving} />
+                <StorefrontImagePicker label="Imagem principal" description="Escolha e enquadre a foto de destaque da página inicial pela galeria." value={draft.hero_image_url ?? ""} onChange={(value) => onFieldChange("hero_image_url", value)} aspectRatio={4 / 4.6} disabled={saving} />
                 <SettingsField label="Aviso no topo" className="md:col-span-2"><textarea value={draft.announcement_text} onChange={(event) => onFieldChange("announcement_text", event.target.value)} className="admin-input min-h-20 py-2" /></SettingsField>
                 <SettingsField label="Etiqueta acima do título"><input value={draft.hero_eyebrow} onChange={(event) => onFieldChange("hero_eyebrow", event.target.value)} className="admin-input" /></SettingsField>
                 <SettingsField label="Palavra em verde"><input value={draft.hero_accent} onChange={(event) => onFieldChange("hero_accent", event.target.value)} className="admin-input" /></SettingsField>

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { hasSupabaseConfiguration, supabase } from "@/lib/supabase";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import React, { useMemo, useRef, useState } from "react";
@@ -28,6 +29,8 @@ export function ProductMediaPicker({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filesToCrop, setFilesToCrop] = useState<File[]>([]);
+  const [croppedFiles, setCroppedFiles] = useState<File[]>([]);
   const images = useMemo(
     () => normalizedImages(mainImage, additionalImages),
     [mainImage, additionalImages]
@@ -36,7 +39,7 @@ export function ProductMediaPicker({
   const updateImages = (nextImages: string[]) =>
     onChange(nextImages[0] ?? "", nextImages.slice(1).join("\n"));
 
-  const choosePhotos = async (files: FileList | null) => {
+  const choosePhotos = (files: FileList | null) => {
     const selected = Array.from(files ?? []);
     if (!selected.length) return;
     setError(null);
@@ -61,16 +64,27 @@ export function ProductMediaPicker({
       return;
     }
 
+    setFilesToCrop(selected);
+    setCroppedFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadPhotos = async (files: File[]) => {
+    const storageClient = supabase;
+    if (!storageClient) {
+      setError("O envio de fotos ainda não está disponível. Atualize a página e tente novamente.");
+      return;
+    }
     setUploading(true);
     try {
       const uploadedUrls: string[] = [];
-      for (const file of selected) {
+      for (const file of files) {
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const identifier =
           globalThis.crypto?.randomUUID?.() ??
           `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const path = `catalog/${identifier}.${extension}`;
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await storageClient.storage
           .from("product-gallery")
           .upload(path, file, {
             cacheControl: "31536000",
@@ -78,7 +92,7 @@ export function ProductMediaPicker({
             upsert: false,
           });
         if (uploadError) throw uploadError;
-        const { data } = supabase.storage
+        const { data } = storageClient.storage
           .from("product-gallery")
           .getPublicUrl(path);
         uploadedUrls.push(data.publicUrl);
@@ -92,7 +106,8 @@ export function ProductMediaPicker({
       );
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setFilesToCrop([]);
+      setCroppedFiles([]);
     }
   };
 
@@ -180,6 +195,21 @@ export function ProductMediaPicker({
           Nenhuma foto escolhida ainda.
         </div>
       )}
+      <ImageCropDialog
+        open={filesToCrop.length > 0}
+        file={filesToCrop[croppedFiles.length] ?? null}
+        aspectRatio={1}
+        title={`Enquadrar foto ${croppedFiles.length + 1} de ${filesToCrop.length}`}
+        onCancel={() => { setFilesToCrop([]); setCroppedFiles([]); }}
+        onConfirm={async file => {
+          const nextFiles = [...croppedFiles, file];
+          if (nextFiles.length === filesToCrop.length) {
+            await uploadPhotos(nextFiles);
+            return;
+          }
+          setCroppedFiles(nextFiles);
+        }}
+      />
     </section>
   );
 }

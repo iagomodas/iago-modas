@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { hasSupabaseConfiguration, supabase } from "@/lib/supabase";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import React, { useRef, useState } from "react";
@@ -8,6 +9,7 @@ type StorefrontImagePickerProps = {
   description: string;
   value: string;
   onChange: (value: string) => void;
+  aspectRatio?: number;
   disabled?: boolean;
 };
 
@@ -19,17 +21,20 @@ export function StorefrontImagePicker({
   description,
   value,
   onChange,
+  aspectRatio = 1,
   disabled = false,
 }: StorefrontImagePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  const chooseImage = async (file: File | undefined) => {
+  const chooseImage = (file: File | undefined) => {
     if (!file) return;
     setError(null);
 
-    if (!hasSupabaseConfiguration || !supabase) {
+    const storageClient = supabase;
+    if (!hasSupabaseConfiguration || !storageClient) {
       setError("O envio de imagem ainda não está disponível. Atualize a página e tente novamente.");
       return;
     }
@@ -38,23 +43,33 @@ export function StorefrontImagePicker({
       return;
     }
 
+    setPendingFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (file: File) => {
+    const storageClient = supabase;
+    if (!storageClient) {
+      setError("O envio de imagem ainda não está disponível. Atualize a página e tente novamente.");
+      return;
+    }
     setUploading(true);
     try {
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const identifier = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const path = `storefront/${identifier}.${extension}`;
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await storageClient.storage
         .from("storefront-branding")
         .upload(path, file, { cacheControl: "31536000", contentType: file.type, upsert: false });
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from("storefront-branding").getPublicUrl(path);
+      const { data } = storageClient.storage.from("storefront-branding").getPublicUrl(path);
       onChange(data.publicUrl);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Não foi possível enviar a imagem. Tente novamente.");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setPendingFile(null);
     }
   };
 
@@ -98,6 +113,7 @@ export function StorefrontImagePicker({
         <p className="mt-4 rounded-xl border border-dashed border-white/15 px-4 py-5 text-center text-sm text-white/50">Nenhuma imagem escolhida ainda.</p>
       )}
       <p className="mt-3 text-xs text-white/45">JPG, PNG ou WEBP, até 5 MB. Não é necessário copiar links ou URLs.</p>
+      <ImageCropDialog open={Boolean(pendingFile)} file={pendingFile} aspectRatio={aspectRatio} title={`Enquadrar: ${label}`} onCancel={() => setPendingFile(null)} onConfirm={uploadImage} />
     </div>
   );
 }

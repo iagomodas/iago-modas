@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { activeNavigationTarget } from "@/lib/adminNavigation";
 import { LogOut, PanelLeft, type LucideIcon } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -122,6 +123,53 @@ function DashboardLayoutContent({
       setIsResizing(false);
     }
   }, [isCollapsed]);
+
+  useEffect(() => {
+    if (menuItems.length === 0) return;
+
+    let animationFrame: number | null = null;
+    const updateActiveMenuFromScroll = () => {
+      animationFrame = null;
+      const activationLine = Math.max(112, window.innerHeight * 0.28);
+      const sections = menuItems
+        .map(item => ({ item, element: document.getElementById(item.target) }))
+        .filter(
+          (
+            entry
+          ): entry is { item: DashboardMenuItem; element: HTMLElement } =>
+            Boolean(entry.element)
+        );
+
+      if (sections.length === 0) return;
+
+      const nextTarget = activeNavigationTarget(
+        sections.map(({ item, element }) => {
+          const bounds = element.getBoundingClientRect();
+          return { target: item.target, top: bounds.top, bottom: bounds.bottom };
+        }),
+        activationLine
+      );
+
+      setActiveMenuTarget(current =>
+        current === nextTarget ? current : nextTarget
+      );
+    };
+
+    const handleScroll = () => {
+      if (animationFrame !== null) return;
+      animationFrame = window.requestAnimationFrame(updateActiveMenuFromScroll);
+    };
+
+    updateActiveMenuFromScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [menuItems]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
