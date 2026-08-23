@@ -101,6 +101,9 @@ export default function CheckoutPage() {
       ? "Instagram"
       : "atendimento";
   const automaticPaymentEnabled = settings.future_payment_provider === "mercado_pago" && settings.future_payments_enabled && settings.future_webhook_enabled;
+  const automaticShippingEnabled = settings.future_shipping_provider === "correios" && settings.future_shipping_quotes_enabled;
+  const [shippingQuote, setShippingQuote] = useState<{ available: boolean; priceCents?: number; deadlineDays?: number; message?: string } | null>(null);
+  const [shippingQuoteLoading, setShippingQuoteLoading] = useState(false);
 
   useEffect(() => {
     if (registeredOrder) window.sessionStorage.setItem(REGISTERED_ORDER_STORAGE_KEY, JSON.stringify(registeredOrder));
@@ -114,6 +117,28 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (deliveryKind === "outside" && (paymentMethod === "cash" || paymentMethod === "credit")) setPaymentMethod(null);
   }, [deliveryKind, paymentMethod]);
+
+  useEffect(() => {
+    setShippingQuote(null);
+    if (!automaticShippingEnabled || deliveryKind !== "outside" || !supabase) return;
+    const cep = address.cep.replace(/\D/g, "");
+    if (cep.length !== 8 || cart.length === 0) return;
+    let cancelled = false;
+    setShippingQuoteLoading(true);
+    void (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("future-shipping-quote", {
+          body: { destinationPostalCode: cep, items: cart.map((item) => ({ productId: item.id, quantity: item.quantity })) },
+        });
+        if (!cancelled) setShippingQuote(data ?? null);
+      } catch {
+        if (!cancelled) setShippingQuote(null);
+      } finally {
+        if (!cancelled) setShippingQuoteLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [automaticShippingEnabled, deliveryKind, address.cep, cartFingerprint]);
 
   useEffect(() => {
     void (async () => {
@@ -319,10 +344,12 @@ export default function CheckoutPage() {
     submitLockRef.current = true;
     setSubmitting(true);
     try {
-      const fullAddress = `${address.street}, ${address.number}${address.complement ? `, ${address.complement}` : ""} — ${address.district} — ${address.city}/${address.state}`;
       const { data, error } = await supabase.functions.invoke("future-payment-preference", {
         body: {
-          customerName: name.trim(), customerPhone: profilePhone, postalCode: address.cep, address: fullAddress,
+          customerName: name.trim(), customerPhone: profilePhone, postalCode: address.cep, address: address.street,
+          deliveryNumber: address.number, deliveryComplement: address.complement, deliveryNeighborhood: address.district,
+          deliveryCity: address.city, deliveryState: address.state,
+          shippingCostCents: shippingQuote?.available ? shippingQuote.priceCents ?? 0 : 0,
           items: cart.map((item) => ({ productId: item.id, size: item.size, quantity: item.quantity })),
         },
       });
@@ -386,7 +413,7 @@ export default function CheckoutPage() {
         {paymentMethod === "mercado_pago" ? <button disabled={submitting} onClick={() => void startAutomaticPayment()} className="button-primary mt-8 w-full disabled:opacity-60"><CreditCard size={19} />{submitting ? "ABRINDO CHECKOUT..." : "FINALIZAR PEDIDO"}<ExternalLink size={16} /></button> : <button disabled={submitting} onClick={() => void submit(null)} className="button-primary mt-8 w-full disabled:opacity-60"><Check size={19} />{submitting ? "ENVIANDO PEDIDO..." : "FINALIZAR PEDIDO"}</button>}
         {message && <p role="status" className="mt-4 flex gap-2 rounded-xl border border-white/10 bg-white/[.035] p-3 text-xs text-white/65"><Check size={16} className="text-[#7affb9]" />{message}</p>}
       </section>
-      <aside className="order-1 h-fit rounded-[1.5rem] border border-white/10 bg-[#11161b] p-5 sm:p-7 lg:order-2"><h2 className="text-lg font-bold">Resumo do pedido</h2><div className="mt-5 divide-y divide-white/10">{cart.map((item) => <div key={`${item.id}-${item.size}`} className="flex gap-3 py-4"><img src={item.image} alt="" className="h-16 w-14 rounded-lg object-cover object-right" /><div className="flex-1"><p className="text-sm font-semibold">{item.name}</p><p className="mt-1 text-xs text-white/45">Tam. {item.size} · Qtd. {item.quantity}</p></div><strong className="text-sm">{toMoney(item.price * item.quantity)}</strong></div>)}</div><div className="mt-5 border-t border-white/10 pt-5"><div className="flex justify-between text-sm text-white/55"><span>Subtotal dos produtos</span><span>{toMoney(subtotal)}</span></div><div className="mt-3 flex justify-between text-sm text-white/55"><span>Frete</span><span>{deliveryKind === "outside" ? "A combinar" : "Não se aplica"}</span></div><div className="mt-5 flex justify-between text-lg font-bold"><span>Total inicial</span><span>{toMoney(subtotal)}</span></div></div>{deliveryKind === "outside" && <div className="mt-6 flex gap-2 rounded-xl bg-white/[.035] p-3 text-xs leading-5 text-white/50"><Info size={15} className="text-[#7affb9]" />{settings.outside_delivery_notice}</div>}<pre className="mt-5 max-h-52 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 p-4 font-sans text-xs leading-5 text-white/60">{summary}</pre></aside>
+      <aside className="order-1 h-fit rounded-[1.5rem] border border-white/10 bg-[#11161b] p-5 sm:p-7 lg:order-2"><h2 className="text-lg font-bold">Resumo do pedido</h2><div className="mt-5 divide-y divide-white/10">{cart.map((item) => <div key={`${item.id}-${item.size}`} className="flex gap-3 py-4"><img src={item.image} alt="" className="h-16 w-14 rounded-lg object-cover object-right" /><div className="flex-1"><p className="text-sm font-semibold">{item.name}</p><p className="mt-1 text-xs text-white/45">Tam. {item.size} · Qtd. {item.quantity}</p></div><strong className="text-sm">{toMoney(item.price * item.quantity)}</strong></div>)}</div><div className="mt-5 border-t border-white/10 pt-5"><div className="flex justify-between text-sm text-white/55"><span>Subtotal dos produtos</span><span>{toMoney(subtotal)}</span></div><div className="mt-3 flex justify-between text-sm text-white/55"><span>Frete</span><span>{deliveryKind !== "outside" ? "Não se aplica" : shippingQuoteLoading ? "Calculando..." : shippingQuote?.available && shippingQuote.priceCents ? `${toMoney(shippingQuote.priceCents / 100)} · ${shippingQuote.deadlineDays ?? "?"} dias úteis` : "A combinar"}</span></div><div className="mt-5 flex justify-between text-lg font-bold"><span>Total inicial</span><span>{toMoney(subtotal + (deliveryKind === "outside" && shippingQuote?.available && shippingQuote.priceCents ? shippingQuote.priceCents / 100 : 0))}</span></div></div>{deliveryKind === "outside" && <div className="mt-6 flex gap-2 rounded-xl bg-white/[.035] p-3 text-xs leading-5 text-white/50"><Info size={15} className="text-[#7affb9]" />{settings.outside_delivery_notice}</div>}<pre className="mt-5 max-h-52 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 p-4 font-sans text-xs leading-5 text-white/60">{summary}</pre></aside>
     </div>
   </main>;
 }
