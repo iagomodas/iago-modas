@@ -27,7 +27,7 @@ button, input { font: inherit; }
 .offer-panel { position: relative; background: linear-gradient(115deg, #152721 0%, #111920 45%, #11151a 100%); }
 .product-card { min-width: 0; }
 .product-image-wrap { position: relative; display: block; overflow: hidden; border-radius: 1rem; border: 1px solid rgba(255,255,255,.1); background: #171d21; }
-.product-image { display: block; aspect-ratio: .87; width: 100%; object-fit: cover; object-position: right; transition: transform 420ms cubic-bezier(.23,1,.32,1), filter 250ms ease; }
+.product-image { display: block; aspect-ratio: .87; width: 100%; object-fit: cover; object-position: center; transition: transform 420ms cubic-bezier(.23,1,.32,1), filter 250ms ease; }
 .product-card:hover .product-image { transform: scale(1.045); }
 .badge-discount, .badge-new { position: absolute; top: 10px; border-radius: 999px; padding: 5px 8px; font-family: "DM Mono", monospace; font-size: 9px; font-weight: 500; letter-spacing: .04em; }
 .badge-discount { left: 10px; background: #ff8585; color: #300606; }
