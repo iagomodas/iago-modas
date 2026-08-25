@@ -75,13 +75,13 @@ export default function ProductPage() {
   return (
     <main className="container py-8 md:py-12">
       <div className="flex items-center gap-1.5 text-xs text-white/45"><Link href="/" className="hover:text-[#7affb9]">Início</Link><ChevronRight size={14} /><Link href={`/categoria/${categorySlug(product.category)}`} className="hover:text-[#7affb9]">{product.category}</Link><ChevronRight size={14} /><span className="max-w-36 truncate sm:max-w-none">{product.name}</span></div>
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.04fr_.96fr] lg:gap-14">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1.04fr_.96fr] lg:gap-14">
         <div className="order-1 grid grid-cols-1 gap-3 sm:grid-cols-[72px_1fr] lg:order-1">
           <div className="order-2 flex gap-3 overflow-x-auto sm:order-1 sm:flex-col">
             {gallery.map((image, index) => <button key={`${image}-${index}`} type="button" onClick={() => setActiveImage(index)} aria-label={`Ver foto ${index + 1} de ${gallery.length}`} className={`shrink-0 overflow-hidden rounded-xl border p-0.5 transition ${activeImage === index ? "border-[#7affb9]" : "border-white/10 opacity-55 hover:opacity-100"}`}><img src={image} alt={`${product.name} — foto ${index + 1}`} className="h-16 w-16 rounded-[9px] object-cover sm:h-auto sm:w-full sm:aspect-square" /></button>)}
           </div>
           <div className="order-1 relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#13191d]" onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)} onTouchEnd={handleTouchEnd}>
-            <img src={gallery[activeImage]} alt={`${product.name} — foto ${activeImage + 1}`} className="aspect-square w-full object-cover object-right" style={{ filter: `hue-rotate(${product.id * 22}deg) saturate(${0.72 + product.id / 20})` }} />
+            <img src={gallery[activeImage]} alt={`${product.name} — foto ${activeImage + 1}`} className="aspect-square w-full object-cover object-center" style={{ filter: `hue-rotate(${product.id * 22}deg) saturate(${0.72 + product.id / 20})` }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
             {gallery.length > 1 && <><button type="button" onClick={() => moveImage(-1)} aria-label="Foto anterior" className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur transition hover:bg-[#7affb9] hover:text-black"><ChevronLeft size={19} /></button><button type="button" onClick={() => moveImage(1)} aria-label="Próxima foto" className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur transition hover:bg-[#7affb9] hover:text-black"><ChevronRight size={19} /></button></>}
             {discount && <span className="badge-discount">-{discount}%</span>}{product.badge && <span className="badge-new">{product.badge}</span>}
