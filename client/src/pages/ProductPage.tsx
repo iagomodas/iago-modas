@@ -43,7 +43,7 @@ export default function ProductPage() {
       <main className="container py-20 text-center">
         <p className="eyebrow">CATÁLOGO</p>
         <h1 className="section-title mt-3">{isLoading ? "CARREGANDO PRODUTO" : "PRODUTO NÃO PUBLICADO"}</h1>
-        <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">{isLoading ? "Aguarde enquanto a loja carrega o catálogo." : "Este modelo não está disponível no catálogo da IAGO MODAS. Veja os produtos publicados ou fale com a loja pelos canais de atendimento ativos."}</p>
+        <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">{isLoading ? "Aguarde enquanto a loja carrega o catálogo." : "Este produto não está disponível no catálogo da IAGO MODAS. Veja os produtos publicados ou fale com a loja pelos canais de atendimento ativos."}</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/" className="button-primary">VER CATÁLOGO</Link>
           {contactChannels.map((channel) => <a key={channel.id} href={channel.href} target="_blank" rel="noreferrer" className={channel.className}><channel.Icon size={18} />{channel.label}</a>)}
@@ -54,7 +54,7 @@ export default function ProductPage() {
 
   const related = products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 4);
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : null;
-  const productMeta = [product.category, product.brand, product.collection].filter(Boolean).join(" / ");
+  const productMeta = [product.category, product.brand].filter(Boolean).join(" / ");
 
   function addItems() {
     if (!product) return;
@@ -100,7 +100,7 @@ export default function ProductPage() {
           <div className="mt-7 grid gap-3 border-t border-white/10 pt-6 text-sm text-white/60"><p className="flex items-center gap-2"><ShieldCheck size={17} className="text-[#7affb9]" /> Atendimento direto para confirmar pedido e entrega</p></div>
         </section>
       </div>
-      {related.length > 0 && <section className="mt-20 border-t border-white/10 pt-12"><p className="eyebrow">VOCÊ TAMBÉM PODE GOSTAR</p><h2 className="section-title mt-2">MAIS DA COLEÇÃO</h2><div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 md:grid-cols-3 lg:grid-cols-4">{related.map((item) => <ProductCard key={item.id} product={item} />)}</div></section>}
+      {related.length > 0 && <section className="mt-20 border-t border-white/10 pt-12"><p className="eyebrow">VOCÊ TAMBÉM PODE GOSTAR</p><h2 className="section-title mt-2">MAIS PRODUTOS</h2><div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 md:grid-cols-3 lg:grid-cols-4">{related.map((item) => <ProductCard key={item.id} product={item} />)}</div></section>}
     </main>
   );
 }

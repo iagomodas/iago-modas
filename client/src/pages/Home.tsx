@@ -93,7 +93,7 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-[600px] lg:mr-0">
             <div className="absolute -inset-12 rounded-full bg-[var(--store-primary)]/10 blur-[90px]" />
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#12171b] p-2 shadow-[0_25px_80px_rgba(0,0,0,.45)]">
-              <img src={heroSrc} onError={() => setHeroSrc(heroImage)} alt="Modelo vestindo moda urbana IAGO MODAS" className="aspect-[4/4.6] w-full rounded-[1.55rem] object-cover object-right" />
+              <img src={heroSrc} onError={() => setHeroSrc(heroImage)} alt="Pessoa vestindo moda urbana IAGO MODAS" className="aspect-[4/4.6] w-full rounded-[1.55rem] object-cover object-right" />
               <div className="absolute bottom-8 left-8 rounded-xl border border-white/10 bg-black/60 px-4 py-3 backdrop-blur">
                 <p className="text-[9px] font-bold tracking-[.2em] text-[var(--store-primary)]">CURADORIA IM</p>
                 <p className="mt-1 text-sm font-semibold">Moda urbana premium</p>
@@ -134,7 +134,7 @@ export default function Home() {
       </section>}
 
       {settings.highlights_visible && highlights.length === 0 && <section className="container pb-16 pt-4 md:pb-24">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[.025] p-7 md:p-10"><p className="eyebrow">CATÁLOGO</p><h2 className="section-title mt-2">NOVIDADES EM BREVE</h2><p className="mt-4 max-w-2xl text-sm leading-6 text-white/55">A vitrine está sendo preparada com os próximos modelos. Fale com a loja para saber sobre disponibilidade e novidades.</p>{primarySupportChannel && <a href={primarySupportChannel.href} target="_blank" rel="noreferrer" className={`${primarySupportChannel.buttonClassName} mt-6`}><primarySupportChannel.Icon aria-hidden="true" size={17} /> {primarySupportChannel.label}</a>}</div>
+        <div className="rounded-[2rem] border border-white/10 bg-white/[.025] p-7 md:p-10"><p className="eyebrow">CATÁLOGO</p><h2 className="section-title mt-2">NOVIDADES EM BREVE</h2><p className="mt-4 max-w-2xl text-sm leading-6 text-white/55">A vitrine está sendo preparada com as próximas peças. Fale com a loja para saber sobre disponibilidade e novidades.</p>{primarySupportChannel && <a href={primarySupportChannel.href} target="_blank" rel="noreferrer" className={`${primarySupportChannel.buttonClassName} mt-6`}><primarySupportChannel.Icon aria-hidden="true" size={17} /> {primarySupportChannel.label}</a>}</div>
       </section>}
 
       {settings.newsletter_visible && <section className="container py-16 md:py-24">

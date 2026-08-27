@@ -16,7 +16,6 @@ export type Product = {
   name: string;
   category: Category;
   brand?: string;
-  collection?: string;
   price: number;
   oldPrice?: number;
   badge?: "NOVO" | "LANÇAMENTO";
@@ -50,7 +49,7 @@ export const products: Product[] = [
   { id: 7, slug: "conjunto-performance", name: "Conjunto Performance", category: "Esportivo", price: 159.9, sizes: ["P", "M", "G", "GG"], color: "#8ee9ff", description: "Conjunto esportivo leve e respirável, feito para mobilidade e conforto diário.", image: productImage },
   { id: 8, slug: "fragrancia-noir", name: "Fragrância Noir", category: "Perfumes", price: 129.9, badge: "NOVO", sizes: ["100 ml"], color: "#d5aa70", description: "Fragrância amadeirada de presença marcante, ideal para noites e ocasiões especiais.", image: productImage },
   { id: 9, slug: "bone-om-classic", name: "Boné OM Classic", category: "Acessórios", price: 69.9, sizes: ["Único"], color: "#ffffff", description: "Boné de aba curva com visual essencial e estrutura confortável para o dia a dia.", image: productImage },
-  { id: 10, slug: "camiseta-chapter-one", name: "Camiseta Chapter One", category: "Camisetas", price: 99.9, badge: "LANÇAMENTO", sizes: ["P", "M", "G", "GG"], color: "#61ffc8", description: "Peça de coleção com gola reforçada, modelagem contemporânea e toque macio.", image: productImage },
+  { id: 10, slug: "camiseta-chapter-one", name: "Camiseta Chapter One", category: "Camisetas", price: 99.9, badge: "LANÇAMENTO", sizes: ["P", "M", "G", "GG"], color: "#61ffc8", description: "Peça selecionada com gola reforçada, acabamento contemporâneo e toque macio.", image: productImage },
 ];
 
 export const toMoney = (value: number) =>
@@ -58,18 +57,3 @@ export const toMoney = (value: number) =>
 
 export const categorySlug = (category: string) =>
   category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-export function productModel(product: Pick<Product, "collection">): string | undefined {
-  const value = product.collection?.trim();
-  return value || undefined;
-}
-
-export function categoryModels(products: Product[]): string[] {
-  return Array.from(
-    new Set(
-      products
-        .map(productModel)
-        .filter((model): model is string => Boolean(model)),
-    ),
-  ).sort((left, right) => left.localeCompare(right, "pt-BR"));
-}

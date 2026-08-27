@@ -29,7 +29,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
   const { products } = useCatalog();
   const { settings } = useStorefrontSettings();
   const [logoSrc, setLogoSrc] = useState(() => resolveStorefrontImage(settings.logo_url, logoImage));
-  const suggestions = useMemo(() => { const normalized = query.trim().toLocaleLowerCase("pt-BR"); return normalized ? products.filter((product) => `${product.name} ${product.category} ${product.brand ?? ""} ${product.collection ?? ""}`.toLocaleLowerCase("pt-BR").includes(normalized)).slice(0, 4) : []; }, [products, query]);
+  const suggestions = useMemo(() => { const normalized = query.trim().toLocaleLowerCase("pt-BR"); return normalized ? products.filter((product) => `${product.name} ${product.category} ${product.brand ?? ""} ${product.description}`.toLocaleLowerCase("pt-BR").includes(normalized)).slice(0, 4) : []; }, [products, query]);
   function openSearchResults() {
     const target = query.trim();
     if (target) window.location.hash = buildSearchHashLocation(target);

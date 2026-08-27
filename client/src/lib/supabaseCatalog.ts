@@ -28,7 +28,6 @@ export function toStoreProduct(product: SupabaseProduct): Product {
     name: product.name,
     category: product.category as Category,
     brand: product.brand?.trim() || undefined,
-    collection: product.collection?.trim() || undefined,
     price: product.price_cents / 100,
     oldPrice: product.compare_at_price_cents ? product.compare_at_price_cents / 100 : undefined,
     badge: product.badge === "NOVO" || product.badge === "LANÇAMENTO" ? product.badge : undefined,

@@ -67,7 +67,7 @@ function orderErrorMessage(error: unknown) {
       : "";
 
   if (/produto.*(não está disponível|indisponível)|quantidade.*(não está disponível|estoque)/i.test(raw)) {
-    return "Este modelo ainda não está cadastrado ou não está disponível no painel da loja.";
+    return "Este produto ainda não está cadastrado ou não está disponível no painel da loja.";
   }
   if (/dados do cliente inválidos/i.test(raw)) return "Revise os dados do seu perfil antes de enviar o pedido.";
   if (/entrar com google/i.test(raw)) return "Entre com Google antes de enviar o pedido.";

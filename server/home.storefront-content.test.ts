@@ -37,7 +37,7 @@ describe("conteúdo editável da página inicial", () => {
 
   it("oferece os campos correspondentes ao administrador", () => {
     [
-      "COLEÇÃO E CATEGORIAS",
+      "DESTAQUES E CATEGORIAS",
       "BENEFÍCIOS",
       "benefit_one_title",
       "categories_title",

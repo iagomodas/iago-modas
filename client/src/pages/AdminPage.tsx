@@ -60,7 +60,6 @@ type ProductForm = {
   slug: string;
   category: Category;
   brand: string;
-  collection: string;
   description: string;
   price: string;
   compareAtPrice: string;
@@ -83,7 +82,6 @@ const emptyForm: ProductForm = {
   slug: "",
   category: "Camisetas",
   brand: "IAGO MODAS",
-  collection: "",
   description: "",
   price: "",
   compareAtPrice: "",
@@ -175,7 +173,6 @@ function toForm(product: SupabaseProduct): ProductForm {
     slug: product.slug,
     category: product.category as Category,
     brand: product.brand ?? "IAGO MODAS",
-    collection: product.collection ?? "",
     description: product.description,
     price: (product.price_cents / 100).toFixed(2).replace(".", ","),
     compareAtPrice: product.compare_at_price_cents
@@ -353,7 +350,6 @@ function AdminConsole() {
       slug: form.slug.trim() || slugify(form.name),
       category: form.category,
       brand: form.brand.trim() || "IAGO MODAS",
-      collection: form.collection.trim() || null,
       description: form.description.trim(),
       price_cents: asCents(form.price),
       compare_at_price_cents: form.compareAtPrice
@@ -625,36 +621,23 @@ function AdminConsole() {
                 ))}
               </select>
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Marca da peça">
-                <input
-                  value={form.brand}
-                  onChange={event => set("brand", event.target.value)}
-                  className="admin-input"
-                  placeholder="Digite ou escolha uma marca"
-                  list="iago-known-brands"
-                />
-                <datalist id="iago-known-brands">
-                  {knownBrands.map(brand => (
-                    <option key={brand} value={brand} />
-                  ))}
-                </datalist>
-                <p className="mt-1 text-[11px] leading-4 text-white/45">
-                  Escreva uma nova marca ou escolha uma já cadastrada. Ela aparecerá como filtro para os clientes.
-                </p>
-              </Field>
-              <Field label="Modelo específico (opcional)">
-                <input
-                  value={form.collection}
-                  onChange={event => set("collection", event.target.value)}
-                  className="admin-input"
-                  placeholder="Ex.: Oversized, Polo ou Estampada"
-                />
-                <p className="mt-1 text-[11px] leading-4 text-white/45">
-                  O cliente poderá escolher este modelo ao entrar na categoria da peça.
-                </p>
-              </Field>
-            </div>
+            <Field label="Marca da peça">
+              <input
+                value={form.brand}
+                onChange={event => set("brand", event.target.value)}
+                className="admin-input"
+                placeholder="Digite ou escolha uma marca"
+                list="iago-known-brands"
+              />
+              <datalist id="iago-known-brands">
+                {knownBrands.map(brand => (
+                  <option key={brand} value={brand} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-[11px] leading-4 text-white/45">
+                Escreva uma nova marca ou escolha uma já cadastrada. Ela aparecerá como filtro para os clientes.
+              </p>
+            </Field>
             <Field label="Descrição">
               <textarea
                 required
@@ -1034,7 +1017,7 @@ function StorefrontEditor({
       ],
     },
     {
-      title: "COLEÇÃO E CATEGORIAS",
+      title: "DESTAQUES E CATEGORIAS",
       fields: [
         { key: "highlights_eyebrow", label: "Etiqueta dos destaques" },
         { key: "highlights_title", label: "Título dos destaques" },
