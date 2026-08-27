@@ -55,7 +55,8 @@ describe("galeria do catálogo Supabase", () => {
   });
 
   it("envia fotos adicionais pelo formulário administrativo", () => {
-    expect(adminPageSource).toContain("Fotos adicionais");
-    expect(adminPageSource).toContain("form.imageUrls");
+    expect(adminPageSource).toContain("ProductMediaPicker");
+    expect(adminPageSource).toContain("additionalImages={form.imageUrls}");
+    expect(adminPageSource).toContain("imageUrls: additionalImages");
   });
 });

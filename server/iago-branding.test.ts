@@ -20,8 +20,8 @@ describe("marca pública IAGO MODAS", () => {
   it("usa o nome, o monograma IM e a logo publicada corretos", () => {
     expect(publicFiles).toContain("IAGO MODAS");
     expect(publicFiles).toContain("Logo IM");
-    expect(publicFiles).toContain("iago-modas-logo-instagram_c08296de.png");
-    expect(publicFiles).toContain('!configuredLogo.startsWith("/manus-storage/")');
+    expect(publicFiles).toMatch(/data:image\/webp;base64/);
+    expect(publicFiles).toContain('configuredImage?.startsWith("/manus-storage/")');
     expect(publicFiles).toContain("IM SELECTED");
     expect(publicFiles).toContain("Ex.: IM-2026-001");
     expect(publicFiles).toContain("Olá, IAGO MODAS!");

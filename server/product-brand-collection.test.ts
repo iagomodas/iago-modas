@@ -24,7 +24,7 @@ describe("gestão de marca e coleção no catálogo", () => {
   });
 
   it("oferece campos de marca e coleção no formulário do dono", () => {
-    expect(adminPage).toContain('label="Marca"');
-    expect(adminPage).toContain('label="Coleção"');
+    expect(adminPage).toContain('label="Marca da peça"');
+    expect(adminPage).toContain('label="Modelo específico (opcional)"');
   });
 });

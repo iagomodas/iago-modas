@@ -30,6 +30,18 @@ const profilePhotoHelper = readFileSync(
   resolve(process.cwd(), "client/src/lib/profilePhoto.ts"),
   "utf8",
 );
+const checkoutStockHardeningMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608270001_security_hardening_checkout_stock.sql"),
+  "utf8",
+);
+const publicStorageMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608270003_version_public_storage_buckets.sql"),
+  "utf8",
+);
+const postMigrationCleanupMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/202608270005_post_migration_security_cleanup.sql"),
+  "utf8",
+);
 
 describe("migração Supabase da Overzied Modas", () => {
   it("habilita RLS em todos os dados públicos da loja", () => {
@@ -83,6 +95,35 @@ describe("migração Supabase da Overzied Modas", () => {
     expect(checkoutHardeningMigration).toContain("revoke all on function public.create_checkout_order");
     expect(checkoutHardeningMigration).toContain("to authenticated");
     expect(checkoutHardeningMigration).not.toMatch(/grant execute[\s\S]*create_checkout_order[\s\S]*to anon/i);
+  });
+
+  it("endurece checkout contra replay, payload abusivo e corrida de estoque", () => {
+    expect(checkoutStockHardeningMigration).toContain("jsonb_array_length(p_items) > 30");
+    expect(checkoutStockHardeningMigration).toContain("char_length(p_items::text) > 20000");
+    expect(checkoutStockHardeningMigration).toContain("consume_checkout_submission_slot");
+    expect(checkoutStockHardeningMigration).toContain("for update");
+    expect(checkoutStockHardeningMigration).toContain("stock = stock - requested.quantity");
+    expect(checkoutStockHardeningMigration).toContain("release_reserved_stock_on_order_terminal_status");
+    expect(checkoutStockHardeningMigration).toContain("revoke all on function public.create_checkout_order");
+    expect(checkoutStockHardeningMigration).toMatch(/grant execute on function public\.create_manual_delivery_order_once[\s\S]*to authenticated/);
+  });
+
+  it("versiona os buckets públicos e exige admin para suas mutações", () => {
+    expect(publicStorageMigration).toContain("product-gallery");
+    expect(publicStorageMigration).toContain("storefront-branding");
+    expect(publicStorageMigration).toContain("select public.is_admin()");
+    expect(publicStorageMigration).toContain("product gallery: public read");
+  });
+
+  it("fecha advisories sem quebrar uma instalação limpa", () => {
+    expect(postMigrationCleanupMigration).toContain("to_regclass('public.future_integration_credentials')");
+    expect(postMigrationCleanupMigration).toContain("revoke all on function public.handle_new_user() from public, anon, authenticated");
+    expect(postMigrationCleanupMigration).toContain("revoke all on function public.rls_auto_enable() from public, anon, authenticated");
+    expect(postMigrationCleanupMigration).toContain("create policy \"profiles: user or admin may read\"");
+    expect(postMigrationCleanupMigration).toContain("create policy \"orders: customer or admin may read\"");
+    expect(postMigrationCleanupMigration).toContain("create policy \"order items: customer or admin may read\"");
+    expect(postMigrationCleanupMigration).toContain("alter function public.assign_iago_owner_admin() set search_path = pg_catalog, public");
+    expect(postMigrationCleanupMigration).toContain("order_items_product_id_idx");
   });
 
   it("mantém a preparação de pagamento e frete futuros desativada por padrão", () => {

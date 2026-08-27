@@ -1,0 +1,8 @@
+# Mudanças nestas áreas exigem revisão do proprietário do repositório.
+.github/workflows/ @iagomodas
+.github/dependabot.yml @iagomodas
+package.json @iagomodas
+pnpm-lock.yaml @iagomodas
+pnpm-workspace.yaml @iagomodas
+supabase/migrations/ @iagomodas
+server/_core/ @iagomodas

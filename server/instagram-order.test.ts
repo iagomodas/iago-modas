@@ -15,23 +15,20 @@ import {
 describe("pedido pelo Instagram", () => {
   it("usa o perfil oficial da IAGO MODAS como destino", () => {
     expect(INSTAGRAM_HANDLE).toBe("iagomodas9");
-    expect(instagramAppUrl).toBe("instagram://direct?username=iagomodas9");
-    expect(instagramAndroidIntentUrl).toBe(
-      "intent://direct?username=iagomodas9#Intent;scheme=instagram;package=com.instagram.android;end",
-    );
+    expect(instagramAppUrl).toBe(instagramDirectUrl);
+    expect(instagramAndroidIntentUrl).toContain("intent://ig.me/m/iagomodas9");
+    expect(instagramAndroidIntentUrl).toContain("package=com.instagram.android");
+    expect(instagramAndroidIntentUrl).toContain("S.browser_fallback_url=");
     expect(instagramDirectUrl).toBe("https://ig.me/m/iagomodas9");
-    expect(getInstagramOpenUrl()).toBeTruthy();
+    expect(getInstagramOpenUrl()).toBe(instagramDirectUrl);
   });
 
-  it("prioriza a conversa direta e usa o Instagram web como fallback", () => {
-    expect(helperSource).toContain("return `intent://direct?username=${username}");
-    expect(helperSource).toContain("return `instagram://direct?username=${username}`");
-    expect(helperSource).toContain("/Android/i.test(navigator.userAgent)");
-    expect(helperSource).toContain("/iPhone|iPad|iPod/i.test(navigator.userAgent)");
-    expect(helperSource).toContain("window.location.assign(directUrl)");
-    expect(helperSource).toContain("getInstagramOpenUrl");
-    expect(helperSource).toContain("document.addEventListener(\"visibilitychange\", clearFallback");
-    expect(helperSource).toContain("window.setTimeout");
+  it("mantém o link oficial como fallback estável e documenta o Intent Android separado", () => {
+    expect(helperSource).toContain("getInstagramAndroidIntentUrl");
+    expect(helperSource).toContain("S.browser_fallback_url");
+    expect(helperSource).toContain("return getInstagramDirectUrl(handle)");
+    expect(helperSource).toContain("window.location.assign(getInstagramOpenUrl(handle))");
+    expect(helperSource).toContain("/Android/i.test(userAgent)");
   });
 
   it("gera um resumo copiável com item, tamanho, quantidade e subtotal", () => {

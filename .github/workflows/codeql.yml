@@ -1,0 +1,33 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analisar JavaScript e TypeScript
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@717e230604b28efc38d8b4d3737d0611b16bc19a # v3.30.0
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - name: Analisar com CodeQL
+        uses: github/codeql-action/analyze@717e230604b28efc38d8b4d3737d0611b16bc19a # v3.30.0
+        with:
+          category: /language:javascript-typescript

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+const url = process.env.VITE_SUPABASE_URL;
+const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const hasSupabaseConfig = Boolean(url && key);
+
 describe("credenciais públicas do Supabase", () => {
-  it("alcança o endpoint REST com a chave pública configurada", async () => {
-    const url = process.env.VITE_SUPABASE_URL;
-    const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  it.skipIf(!hasSupabaseConfig)("alcança o endpoint REST com a chave pública configurada", async () => {
     expect(url).toMatch(/^https:\/\/[^/]+\.supabase\.co$/);
     expect(key).toBeTruthy();
 

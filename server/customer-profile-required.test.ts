@@ -21,6 +21,6 @@ describe("cadastro próprio do cliente", () => {
 
   it("informa publicamente que o frete de outra cidade é combinado pelo Instagram", () => {
     expect(checkout).toContain("settings.outside_delivery_notice");
-    expect(checkout).toContain("Frete: ${settings.outside_delivery_notice}");
+    expect(checkout).toContain("A combinar");
   });
 });

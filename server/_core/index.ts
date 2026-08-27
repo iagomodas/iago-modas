@@ -8,6 +8,8 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { createRateLimiter } from "./requestSecurity";
+import { assertServerEnvironment } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -29,11 +31,16 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  assertServerEnvironment();
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.disable("x-powered-by");
+  // Files are uploaded directly to object storage; API requests should stay small.
+  app.use(express.json({ limit: "256kb" }));
+  app.use(express.urlencoded({ limit: "64kb", extended: false }));
+  const apiRateLimiter = createRateLimiter();
+  app.use("/api", apiRateLimiter);
+  app.use("/manus-storage", apiRateLimiter);
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   // tRPC API

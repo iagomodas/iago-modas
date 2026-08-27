@@ -35,7 +35,11 @@ vi.mock("@/lib/catalog", () => ({
   products: [galleryProduct],
   toMoney: (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`,
 }));
-vi.mock("@/lib/instagramOrder", () => ({ instagramDirectUrl: "https://ig.me/m/overziedmodas9" }));
+vi.mock("@/lib/instagramOrder", () => ({
+  instagramDirectUrl: "https://ig.me/m/iagomodas9",
+  getInstagramDirectUrl: () => "https://ig.me/m/iagomodas9",
+  getWhatsAppChatUrl: () => "https://wa.me/5511999999999",
+}));
 vi.mock("wouter", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a href="#">{children}</a>,
   useRoute: () => [false, { slug: galleryProduct.slug }],

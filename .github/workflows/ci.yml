@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verificar código e dependências
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Preparar Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Ativar pnpm declarado pelo projeto
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+      - name: Checar tipos
+        run: pnpm run check
+      - name: Executar testes
+        run: pnpm test
+      - name: Auditar dependências de produção
+        run: pnpm audit --prod --audit-level high
+      - name: Validar build estático
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm run build:static

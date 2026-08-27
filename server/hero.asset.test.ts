@@ -1,15 +1,18 @@
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "..");
 const homeSource = readFileSync(resolve(root, "client/src/pages/Home.tsx"), "utf8");
-const publicHeroPath = resolve(root, "client/public/assets/overzied-hero.jpg");
+const heroAssetSource = readFileSync(resolve(root, "client/src/lib/inlineHeroAsset.ts"), "utf8");
 
 describe("imagem principal da vitrine", () => {
   it("prioriza o ativo público em alta resolução", () => {
-    expect(homeSource).toContain('`${import.meta.env.BASE_URL}assets/overzied-hero.jpg`');
-    expect(statSync(publicHeroPath).size).toBeGreaterThan(50_000);
+    expect(homeSource).toContain("resolveStorefrontImage(settings.hero_image_url, heroImage)");
+    expect(heroAssetSource).toMatch(/data:image\/webp;base64,/);
+    const encodedHero = heroAssetSource.match(/heroBase64 = "([^"]+)"/)?.[1];
+    expect(encodedHero).toBeTruthy();
+    expect(Buffer.from(encodedHero!, "base64").length).toBeGreaterThan(3_000);
   });
 
   it("mantém o fallback apenas para erro de carregamento", () => {

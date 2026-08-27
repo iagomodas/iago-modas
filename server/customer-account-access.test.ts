@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 const shell = readFileSync(resolve(process.cwd(), "client/src/components/StoreShell.tsx"), "utf8");
 const profile = readFileSync(resolve(process.cwd(), "client/src/pages/CustomerProfilePage.tsx"), "utf8");
 const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/202608180004_customer_profile_photo.sql"), "utf8");
-const photoReturnFix = readFileSync(resolve(process.cwd(), "supabase/migrations/202608200003_fix_update_own_profile_photo_return.sql"), "utf8");
+const photoHardeningMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/202608270002_harden_profile_photo.sql"), "utf8");
 
 describe("acesso e conta do cliente", () => {
   it("mostra um acesso de conta no cabeçalho sem usar automaticamente a foto do Google", () => {
@@ -45,7 +45,7 @@ describe("acesso e conta do cliente", () => {
     expect(profile).toContain("file.size > PROFILE_PHOTO_MAX_INPUT_BYTES");
     expect(profile).toContain("A foto é maior que 8 MB");
     expect(profile).toContain("optimizeProfilePhoto(file)");
-    expect(profile).toContain('supabase.storage.from("customer-profile-photos").upload');
+    expect(profile).toContain('storage.from("customer-profile-photos").upload');
   });
 
   it("preserva a foto anterior e explica falhas de envio sem ocultar o erro", () => {
@@ -57,7 +57,7 @@ describe("acesso e conta do cliente", () => {
   it("mostra uma prévia imediatamente e recupera a imagem privada sem cache antigo", () => {
     expect(profile).toContain("URL.createObjectURL(optimized.file)");
     expect(profile).toContain("Otimizando sua foto para enviar com qualidade e ocupar menos espaço");
-    expect(profile).toContain("createPrivateProfilePhotoUrl(supabase, nextPath)");
+    expect(profile).toContain("createPrivateProfilePhotoUrl(client, nextPath)");
     expect(profile).toContain("Foto de perfil atualizada e otimizada");
   });
 
@@ -70,11 +70,12 @@ describe("acesso e conta do cliente", () => {
     expect(migration).toContain("auth.uid()::text");
   });
 
-  it("persiste ou remove o caminho privado da foto sem reverter a função no fim", () => {
-    expect(photoReturnFix).toContain("create or replace function public.update_own_profile_photo");
-    expect(photoReturnFix).toContain("returns storage.vector_indexes");
-    expect(photoReturnFix).toContain("where id = auth.uid()");
-    expect(photoReturnFix).toContain("return null;");
-    expect(photoReturnFix).toContain('grant execute on function public.update_own_profile_photo(text) to "authenticated"');
+  it("mantém a foto privada e versiona a correção da função de caminho", () => {
+    expect(photoHardeningMigration).toMatch(/customer-profile-photos[\s\S]*false/);
+    expect(photoHardeningMigration).toContain('create policy "customer profile photos: update own v2"');
+    expect(photoHardeningMigration).toContain("returns void");
+    expect(photoHardeningMigration).toContain("where id = auth.uid()");
+    expect(photoHardeningMigration).toContain('grant execute on function public.update_own_profile_photo(text) to authenticated');
+    expect(photoHardeningMigration).not.toContain("storage.vector_indexes");
   });
 });

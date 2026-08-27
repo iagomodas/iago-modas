@@ -2,33 +2,70 @@ name: Publicar storefront estático no GitHub Pages
 
 on:
   push:
-    branches: [main, root]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  verify:
+    name: Verificar código e dependências
     runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Preparar Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Ativar pnpm declarado pelo projeto
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+      - name: Checar tipos
+        run: pnpm run check
+      - name: Executar testes
+        run: pnpm test
+      - name: Auditar dependências de produção
+        run: pnpm audit --prod --audit-level high
+      - name: Validar build estático
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm run build:static
+
+  build:
+    name: Publicar GitHub Pages
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Baixar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Preparar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - name: Instalar pnpm compatível
-        run: npm install --global pnpm@10.4.1
+      - name: Ativar pnpm declarado pelo projeto
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
       - name: Gerar site estático
@@ -38,9 +75,9 @@ jobs:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: pnpm run build:static
       - name: Enviar artefato
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: dist/public
       - name: Publicar GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

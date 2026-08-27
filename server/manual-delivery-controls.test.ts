@@ -26,9 +26,9 @@ describe("controles de entrega manual", () => {
   it("apresenta ao dono que o frete é combinado manualmente pelo Instagram", () => {
     const adminPage = readFileSync(resolve(process.cwd(), "client/src/pages/AdminPage.tsx"), "utf8");
 
-    expect(adminPage).toContain('awaiting_freight: "Frete a combinar pelo Instagram"');
+    expect(adminPage).toContain('awaiting_freight: "Frete a combinar pelo atendimento"');
     expect(adminPage).not.toContain('awaiting_freight: "Calcular frete"');
-    expect(adminPage).toContain("combine o frete manualmente pelo Instagram");
+    expect(adminPage).toContain("combine o frete manualmente pelo atendimento");
     expect(adminPage).not.toContain("calcule o frete manualmente");
   });
 });
