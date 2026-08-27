@@ -110,5 +110,5 @@
     "vite-plugin-manus-runtime": "0.0.59",
     "vitest": "^3.2.6"
   },
-  "packageManager": "pnpm@11.24.0+sha512.vSfjRel23LC+C3oSKCF7BJqBfiGx81XJDb59xGZxiVqLwebQbCRVRQXqk+oLRfSJon7Bv7yN5qlln8oPFvoAAA=="
+  "packageManager": "pnpm@11.24.0"
 }
